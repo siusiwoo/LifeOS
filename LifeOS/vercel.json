@@ -1,7 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "outputDirectory": "outputs",
   "rewrites": [
-    { "source": "/", "destination": "/lifeos.html" }
+    {
+      "source": "/",
+      "destination": "/outputs/lifeos.html"
+    }
   ]
 }
