@@ -4,6 +4,10 @@
     {
       "source": "/",
       "destination": "/outputs/lifeos.html"
+    },
+    {
+      "source": "/style.css",
+      "destination": "/outputs/style.css"
     }
   ]
 }
