@@ -1,13 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
-    {
-      "source": "/",
-      "destination": "/outputs/lifeos.html"
-    },
-    {
-      "source": "/style.css",
-      "destination": "/outputs/style.css"
-    }
+    { "source": "/", "destination": "/outputs/lifeos.html" },
+    { "source": "/style.css", "destination": "/outputs/style.css" }
   ]
 }
