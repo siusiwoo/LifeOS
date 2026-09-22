@@ -99,3 +99,17 @@ html,body{overflow-x:hidden}
 .category-delete:hover{background:#ececea;color:var(--ink);opacity:1}
 .category-dialog-label{font-size:12px;display:grid;gap:6px}
 .category-dialog-label input{border:1px solid #dfe5d8;border-radius:9px;padding:10px;background:#fcfdf9;color:var(--ink);width:100%}
+/* Inline deletion controls keep record management visible without opening the edit dialog. */
+.delete-inline{width:24px;height:24px;border:1px solid var(--line);border-radius:7px;color:var(--muted);font-size:18px;line-height:1;padding:0;display:inline-grid;place-items:center;flex:0 0 auto}
+.delete-inline:hover{background:#ececea;color:var(--ink)}
+.memo-row{display:flex;align-items:center;border-top:1px solid #eef0e9;gap:8px}
+.memo-row .memo-item{width:auto;flex:1;border-top:0}
+.memo-delete{margin-right:3px}
+.reflection .card-head .delete-inline{margin-left:auto}
+/* Compact X controls aligned with each row. */
+.delete-inline{width:22px;height:22px;border:0;border-radius:50%;background:transparent;color:#8a918d;font-size:17px;font-weight:500;line-height:1;padding:0;display:inline-grid;place-items:center;flex:0 0 22px}
+.delete-inline:hover{background:#eceeeb;color:#343b38}
+.task .delete-inline,.learning .delete-inline{margin-left:0}
+.memo-row{padding-right:2px}
+.memo-delete{margin-right:0}
+.reflection .card-head .delete-inline{margin-left:0}
