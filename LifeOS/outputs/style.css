@@ -26,4 +26,39 @@
 .bar>i{background:#777e79}.income-row{background:#f3f3f1}.stack{background:#e6e7e4}.stack i{filter:grayscale(1)}
 .eyebrow{color:#6e7471}.reflection .eyebrow{color:#6e7471}.priority{color:#686e6b;background:#ededeb}.text-btn{color:#626966}
 .account-action{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:0}.account-action strong{display:block}.account-action small{display:block;margin-top:2px}.account-action:hover strong{text-decoration:underline}.account-action:disabled{opacity:.6}
-`n.memo-item{width:100%;border:0;border-top:1px solid #eef0e9;background:transparent;color:inherit;cursor:pointer;text-align:left;list-style:none;padding:13px 3px;font-size:13px;font-weight:550;display:flex;align-items:center;justify-content:space-between;gap:12px}.memo-item:before{content:"＋";color:var(--muted);margin-right:8px}.memo-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.note-view-dialog{width:460px;max-width:calc(100% - 28px);padding:26px}.note-view-date{color:var(--muted);font-size:11px;margin:-8px 0 18px}.note-view-body{min-height:120px;padding:16px;background:#f7f8f3;border:1px solid #edf0e6;border-radius:12px;white-space:pre-line;overflow-wrap:anywhere;color:var(--ink);font-size:13px;line-height:1.8}`n.memo-item{position:relative;transition:background .18s ease,color .18s ease,box-shadow .18s ease}.memo-item:hover,.memo-item:focus-visible{background:#f6f8f1;color:var(--green);box-shadow:inset 3px 0 var(--green);outline:none}.memo-item:hover .memo-title,.memo-item:focus-visible .memo-title{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}.memo-item:active{background:#edf2e6}.memo-item:before{transition:transform .18s ease;color:var(--muted)}.memo-item:hover:before,.memo-item:focus-visible:before{transform:translateX(2px);color:var(--green)}
+
+.memo-item{width:100%;border:0;border-top:1px solid #eef0e9;background:transparent;color:inherit;cursor:pointer;text-align:left;list-style:none;padding:13px 3px;font-size:13px;font-weight:550;display:flex;align-items:center;justify-content:space-between;gap:12px}.memo-item:before{content:"＋";color:var(--muted);margin-right:8px}.memo-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.note-view-dialog{width:460px;max-width:calc(100% - 28px);padding:26px}.note-view-date{color:var(--muted);font-size:11px;margin:-8px 0 18px}.note-view-body{min-height:120px;padding:16px;background:#f7f8f3;border:1px solid #edf0e6;border-radius:12px;white-space:pre-line;overflow-wrap:anywhere;color:var(--ink);font-size:13px;line-height:1.8}
+.memo-item{position:relative;transition:background .18s ease,color .18s ease,box-shadow .18s ease}.memo-item:hover,.memo-item:focus-visible{background:#f6f8f1;color:var(--green);box-shadow:inset 3px 0 var(--green);outline:none}.memo-item:hover .memo-title,.memo-item:focus-visible .memo-title{text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:3px}.memo-item:active{background:#edf2e6}.memo-item:before{transition:transform .18s ease;color:var(--muted)}.memo-item:hover:before,.memo-item:focus-visible:before{transform:translateX(2px);color:var(--green)}
+/* Memo titles use an almost full-width tile inside the card (11/12 columns). */
+.memo-card .memo-item{
+  width:calc(100% - 8.3333%);
+  margin:8px auto;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:#fbfbfa;
+  padding:13px 16px;
+}
+.memo-card .memo-item:first-of-type{margin-top:0}
+.memo-card .memo-item:hover,.memo-card .memo-item:focus-visible{
+  background:#f0f1ef;
+  box-shadow:inset 3px 0 var(--green),0 4px 12px #34383712;
+}
+.memo-card .memo-more{
+  width:calc(100% - 8.3333%);
+  margin:8px auto 0;
+  border:1px solid var(--line);
+  border-radius:12px;
+  overflow:hidden;
+}
+.memo-card .memo-more .memo-item{
+  width:100%;
+  margin:0;
+  border:0;
+  border-top:1px solid #eef0e9;
+  border-radius:0;
+  background:transparent;
+}
+.memo-card .memo-more .memo-item:first-of-type{border-top:0}
+@media(max-width:600px){
+  .memo-card .memo-item,.memo-card .memo-more{width:calc(100% - 4%)}
+}
