@@ -53,6 +53,7 @@ authDialog.innerHTML = `<form id="auth-form"><div class="modal-head"><h2>이메�
 document.body.append(authDialog);
 function openEmailAuth(){if(!window.lifeosSupabase){alert('Supabase 설정을 먼저 확인해 주세요.');return}authDialog.showModal()}
 function renderAccount(user) {
+  window.lifeosCurrentUser = user || null;
   if (!accountArea) return;
   if (!user) {
     accountArea.innerHTML = '<div class="avatar">나</div><div><button class="account-action" id="login-email"><strong style="font-size:12px">이메일로 로그인</strong><small>계정으로 시작하기</small></button></div>';
@@ -67,8 +68,8 @@ document.querySelector('#close-auth').onclick = () => authDialog.close();
 document.querySelector('#auth-form').onsubmit = async event => { event.preventDefault(); const values=Object.fromEntries(new FormData(event.target)); const {error}=await window.lifeosSupabase.auth.signInWithPassword({email:values.email,password:values.password}); if(error) alert(`로그인에 실패했습니다: ${error.message}`); else authDialog.close(); };
 document.querySelector('#signup-email').onclick = async () => { const values=Object.fromEntries(new FormData(document.querySelector('#auth-form'))); if(!values.email||!values.password){alert('이메일과 비밀번호를 입력해 주세요.');return} const {error}=await window.lifeosSupabase.auth.signUp({email:values.email,password:values.password}); if(error) alert(`회원가입에 실패했습니다: ${error.message}`); else {authDialog.close();alert('가입이 완료되었습니다. 이메일 인증이 필요하면 받은 메일을 확인해 주세요.');} };
 if (window.lifeosSupabase) {
-  window.lifeosSupabase.auth.getSession().then(({ data }) => renderAccount(data.session?.user));
-  window.lifeosSupabase.auth.onAuthStateChange((_event, session) => renderAccount(session?.user));
+  window.lifeosSupabase.auth.getSession().then(({ data }) => { renderAccount(data.session?.user); window.dispatchEvent(new CustomEvent('lifeos-auth', { detail: data.session?.user || null })); });
+  window.lifeosSupabase.auth.onAuthStateChange((_event, session) => { renderAccount(session?.user); window.dispatchEvent(new CustomEvent('lifeos-auth', { detail: session?.user || null })); });
 } else renderAccount(null);
 </script>
 <script>
@@ -102,11 +103,16 @@ const Repository={
  getDay(date){const day=this.data.days[date]||blankDay();return {...blankDay(),...day,notes:Array.isArray(day.notes)?day.notes:[]}},
  getCategory(id){return this.data.categories.find(c=>c.id===id)||{name:'기타',icon:'◇'}},
  save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(this.data));}catch{storageAvailable=false;}updateStorageStatus()},
- upsert(date,kind,record){const day=this.data.days[date]??=blankDay();if(kind==='reflection'){day.reflection=record.title;}else{const list=day[collection(kind)],index=list.findIndex(r=>r.id===record.id);index<0?list.push(record):list.splice(index,1,record);}this.save()},
- remove(date,kind,id){const day=this.data.days[date];if(!day)return;if(kind==='reflection')day.reflection='';else day[collection(kind)]=day[collection(kind)].filter(r=>r.id!==id);this.save()},
- toggle(date,id){const record=this.getDay(date).work.find(r=>r.id===id);if(record){record.done=!record.done;this.save()}}
+ upsert(date,kind,record){const day=this.data.days[date]??=blankDay();if(kind==='reflection'){day.reflection=record.title;}else{const list=day[collection(kind)],index=list.findIndex(r=>r.id===record.id);index<0?list.push(record):list.splice(index,1,record);}this.save();queueRemoteSync(date)},
+ remove(date,kind,id){const day=this.data.days[date];if(!day)return;if(kind==='reflection')day.reflection='';else day[collection(kind)]=day[collection(kind)].filter(r=>r.id!==id);this.save();queueRemoteSync(date)},
+ toggle(date,id){const record=this.getDay(date).work.find(r=>r.id===id);if(record){record.done=!record.done;this.save();queueRemoteSync(date)}}
 };
 const collection=kind=>kind==='asset'?'assets':kind==='note'?'notes':kind;
+let remoteUser=null;
+let remoteSyncTimer=null;
+function queueRemoteSync(date){if(!remoteUser)return;clearTimeout(remoteSyncTimer);remoteSyncTimer=setTimeout(()=>syncDayToSupabase(date),250)}
+async function syncDayToSupabase(date){if(!remoteUser||!window.lifeosSupabase)return;const payload={user_id:remoteUser.id,record_date:date,kind:'day',data:Repository.getDay(date)};try{const client=window.lifeosSupabase;const {data:existing,error:findError}=await client.from('lifeos_records').select('id').eq('user_id',remoteUser.id).eq('record_date',date).eq('kind','day').limit(1).maybeSingle();if(findError)throw findError;const result=existing?await client.from('lifeos_records').update({data:payload.data,updated_at:new Date().toISOString()}).eq('id',existing.id):await client.from('lifeos_records').insert(payload);if(result.error)throw result.error;$('#save-status').textContent='Supabase에 저장됨'}catch(error){console.warn('Supabase 저장 실패',error);$('#save-status').textContent='브라우저에 저장됨'}}
+async function syncFromSupabase(user){if(!user||!window.lifeosSupabase)return;remoteUser=user;try{const {data:rows,error}=await window.lifeosSupabase.from('lifeos_records').select('record_date,data').eq('user_id',user.id).eq('kind','day');if(error)throw error;if(rows?.length){Repository.data.days={};rows.forEach(row=>{if(row.record_date)Repository.data.days[row.record_date]={...blankDay(),...(row.data||{})}});try{localStorage.setItem(STORAGE_KEY,JSON.stringify(Repository.data))}catch{}render();updateStorageStatus();$('#save-status').textContent='Supabase에서 불러옴'}else{Object.keys(Repository.data.days).forEach(date=>syncDayToSupabase(date))}}catch(error){console.warn('Supabase 불러오기 실패',error)}}
 const state={date:today,view:'dashboard',editing:null};
 const views={dashboard:{name:'Dashboard',title:'나의 하루, 한눈에.',description:'일과 성장, 그리고 내일의 여유를 차곡차곡.',eyebrow:'MAKE ROOM FOR A BETTER DAY'},work:{name:'Work',title:'오늘의 일에 집중하기.',description:'업무부터 회사생활까지, 중요한 일을 하나씩.',eyebrow:'ONE THING AT A TIME'},growth:{name:'Growth',title:'조금씩, 더 멀리.',description:'배움과 회고를 쌓아 나만의 성장 기록을 만드세요.',eyebrow:'SMALL STEPS, REAL GROWTH'},money:{name:'Money',title:'내일의 여유를 쌓다.',description:'자산과 부업·수입, 세금 예비금을 한눈에 관리하세요.',eyebrow:'BUILD YOUR TOMORROW'}};
 function updateStorageStatus(){$('#storage-warning').hidden=storageAvailable;$('#save-status').textContent=storageAvailable?'이 브라우저에 자동 저장':'현재 화면에서만 유지';}
@@ -141,6 +147,8 @@ function fields(kind,record={}){if(kind==='note'){$('#dynamic-fields').innerHTML
 const noteOption=document.createElement('option');noteOption.value='note';noteOption.textContent='Work · 메모';$('#record-kind').insertBefore(noteOption,$('#record-kind').firstChild);Array.from($('#record-kind').options).forEach(option=>{if(option.value==='income')option.textContent='Money · 수입'});
 $('#record-form').onsubmit=event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.target)),edit=state.editing,kind=edit.kind,title=(values.title||'').trim();if(!title){toast('내용을 입력해 주세요.');return}const record={id:edit.id||`r-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,title};if(kind==='note')record.body=(values.body||'').trim(),record.createdAt=edit.record.createdAt||state.date;if(kind==='work')Object.assign(record,{category:values.category?.trim()||'업무',done:edit.record.done||false});if(kind==='growth')Object.assign(record,{categoryId:values.categoryId,minutes:Number(values.minutes)});if(kind==='asset'||kind==='income')record.amount=Number(values.amount);if(kind==='asset')record.type=values.type;Repository.upsert(edit.date,kind,record);closeDialog();render();toast('기록을 저장했어요.');};
 Repository.load();render();
+window.addEventListener('lifeos-auth', event => { remoteUser=event.detail||null; if (event.detail) syncFromSupabase(event.detail); });
+if (window.lifeosCurrentUser) syncFromSupabase(window.lifeosCurrentUser);
 </script>
 </body>
 </html>
