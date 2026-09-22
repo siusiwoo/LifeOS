@@ -147,7 +147,17 @@ function fields(kind,record={}){if(kind==='note'){$('#dynamic-fields').innerHTML
 const noteOption=document.createElement('option');noteOption.value='note';noteOption.textContent='Work · 메모';$('#record-kind').insertBefore(noteOption,$('#record-kind').firstChild);Array.from($('#record-kind').options).forEach(option=>{if(option.value==='income')option.textContent='Money · 수입'});
 $('#record-form').onsubmit=event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.target)),edit=state.editing,kind=edit.kind,title=(values.title||'').trim();if(!title){toast('내용을 입력해 주세요.');return}const record={id:edit.id||`r-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,title};if(kind==='note')record.body=(values.body||'').trim(),record.createdAt=edit.record.createdAt||state.date;if(kind==='work')Object.assign(record,{category:values.category?.trim()||'업무',done:edit.record.done||false});if(kind==='growth')Object.assign(record,{categoryId:values.categoryId,minutes:Number(values.minutes)});if(kind==='asset'||kind==='income')record.amount=Number(values.amount);if(kind==='asset')record.type=values.type;Repository.upsert(edit.date,kind,record);closeDialog();render();toast('기록을 저장했어요.');};
 Repository.load();render();
-window.addEventListener('lifeos-auth', event => { remoteUser=event.detail||null; if (event.detail) syncFromSupabase(event.detail); });
+window.addEventListener('lifeos-auth', event => {
+  remoteUser=event.detail||null;
+  if (event.detail) {
+    syncFromSupabase(event.detail);
+  } else {
+    localStorage.removeItem(STORAGE_KEY);
+    Repository.data=seed();
+    render();
+    updateStorageStatus();
+  }
+});
 if (window.lifeosCurrentUser) syncFromSupabase(window.lifeosCurrentUser);
 </script>
 </body>
