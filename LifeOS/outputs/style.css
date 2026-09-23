@@ -113,3 +113,8 @@ html,body{overflow-x:hidden}
 .memo-row{padding-right:2px}
 .memo-delete{margin-right:0}
 .reflection .card-head .delete-inline{margin-left:0}
+/* Growth Pomodoro timer */
+.pomodoro-card{background:#f4f5f2}.pomodoro-time{text-align:center;font-size:54px;letter-spacing:2px;font-weight:650;line-height:1.1;margin:12px 0 3px;color:var(--ink)}.pomodoro-caption{text-align:center;color:var(--muted);font-size:12px}.pomodoro-controls{display:flex;justify-content:center;gap:9px;margin-top:18px}.pomodoro-controls .primary,.pomodoro-controls .outline{min-width:86px}.pomodoro-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px;padding-top:13px;border-top:1px solid #e8eae7;color:var(--muted);font-size:11px}.pomodoro-actions{display:flex;gap:12px}.pomodoro-actions .text-btn{font-size:11px}.pomodoro-card .section-icon{font-size:17px;color:var(--muted)}
+@media(max-width:600px){.pomodoro-time{font-size:46px}.pomodoro-footer{align-items:flex-start;flex-direction:column}.pomodoro-actions{width:100%;justify-content:space-between}}
+.pomodoro-settings{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 8px}.pomodoro-settings label{display:grid;gap:5px;font-size:11px;color:var(--muted)}.pomodoro-settings select{width:100%;border:1px solid #dfe5d8;border-radius:8px;padding:7px;background:#fff;color:var(--ink);font-size:12px}.pomodoro-settings select:disabled{opacity:.65}.pomodoro-card #pomodoro-phase{white-space:nowrap}
+@media(max-width:600px){.pomodoro-settings{grid-template-columns:1fr 1fr}.pomodoro-settings label:last-child{grid-column:1/-1}}
