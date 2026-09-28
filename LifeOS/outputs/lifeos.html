@@ -78,7 +78,7 @@ if (window.lifeosSupabase) {
   window.lifeosSupabase.auth.onAuthStateChange((_event, session) => { renderAccount(session?.user); window.dispatchEvent(new CustomEvent('lifeos-auth', { detail: session?.user || null })); });
 } else renderAccount(null);
 </script>
-<script src="/motivation.js"></script>
+<script src="/motivation.js?v=tree-sync-2"></script>
 <script>
 'use strict';
 // Domain layer: stable IDs and date keys keep records independent of presentation.

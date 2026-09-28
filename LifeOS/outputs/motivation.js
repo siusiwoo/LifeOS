@@ -1,9 +1,10 @@
-// Each saved activity is credited once; deleting/editing it never removes earned trees.
+// Each current saved activity is credited once; undoing or deleting it removes that activity's credit.
 let treeTab = 'current';
 let treePage = 0;
 function rememberGrowth() {
   const settings = Repository.data.motivation ||= {};
   const events = settings.treeEvents ||= {};
+  const active = new Set();
   let changed = false;
   for (const [date, day] of Object.entries(Repository.data.days)) {
     if (date > today) continue;
@@ -11,10 +12,19 @@ function rememberGrowth() {
       for (const record of day[kind] || []) {
         if (!record.id || (kind === 'work' && !record.done)) continue;
         const key = JSON.stringify([date,kind,record.id]);
-        if (Object.hasOwn(events,key)) continue;
-        events[key] = {kind,date,title:String(record.title || '')};
-        changed = true;
+        active.add(key);
+        const next = {kind,date,title:String(record.title || '')};
+        if (!events[key] || events[key].title !== next.title) {
+          events[key] = next;
+          changed = true;
+        }
       }
+    }
+  }
+  for (const key of Object.keys(events)) {
+    if (!active.has(key)) {
+      delete events[key];
+      changed = true;
     }
   }
   if (changed) { Repository.save(); syncCategoriesToSupabase(); }
