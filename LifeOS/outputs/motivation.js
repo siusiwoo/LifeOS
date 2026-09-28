@@ -54,3 +54,46 @@ document.addEventListener('click',event=>{
   if(button.dataset.treeTab){treeTab=button.dataset.treeTab;treePage=0;render();}
   if(button.dataset.treePage!==undefined){treePage=Number(button.dataset.treePage);render();}
 });
+
+function shiftMonth(date, amount) {
+  const value = parseDate(date);
+  value.setDate(1);
+  value.setMonth(value.getMonth() + amount);
+  return dateKey(value);
+}
+
+function calendarView() {
+  const selected = parseDate(state.date);
+  const year = selected.getFullYear();
+  const month = selected.getMonth();
+  const firstDay = new Date(year, month, 1, 12);
+  const offset = (firstDay.getDay() + 6) % 7;
+  const daysInMonth = new Date(year, month + 1, 0, 12).getDate();
+  const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  const cells = [];
+  for (let index = 0; index < offset; index += 1) cells.push('<span class="calendar-cell calendar-empty" aria-hidden="true"></span>');
+  for (let dayNumber = 1; dayNumber <= daysInMonth; dayNumber += 1) {
+    const key = dateKey(new Date(year, month, dayNumber, 12));
+    const recorded = hasData(key);
+    cells.push(`<button type="button" class="calendar-cell ${key === state.date ? 'active' : ''} ${recorded ? 'has-record' : ''}" data-date="${key}" aria-label="${key} 기록 보기"><span>${dayNumber}</span>${recorded ? '<i></i>' : ''}</button>`);
+  }
+  const day = Repository.getDay(state.date);
+  const done = day.work.filter(item => item.done).length;
+  const minutes = day.growth.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
+  const expense = day.expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const income = day.income.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+  const notes = day.notes || [];
+  const records = [
+    `업무 완료 ${done}개 / ${day.work.length}개`,
+    `배움 ${Math.floor(minutes / 60)}시간 ${minutes % 60}분`,
+    `소비 ${won(expense)}원 · 수입 ${won(income)}원`,
+    `메모 ${notes.length}개`
+  ];
+  const entries = [
+    ...day.work.map(item => ({label: item.done ? '완료한 업무' : '업무', title: item.title})),
+    ...day.growth.map(item => ({label: '배움', title: item.title})),
+    ...day.expenses.map(item => ({label: '소비', title: `${item.title} · ${won(item.amount)}원` })),
+    ...day.income.map(item => ({label: '수입', title: `${item.title} · ${won(item.amount)}원` }))
+  ];
+  return `<section class="card calendar-card"><div class="card-head"><div class="card-title"><span class="section-icon">${svg('calendar')}</span><h2>${year}.${String(month + 1).padStart(2, '0')}</h2></div><div class="calendar-month-controls"><button type="button" class="icon-btn" data-calendar-month="-1" aria-label="이전 달">‹</button><button type="button" class="icon-btn" data-calendar-month="1" aria-label="다음 달">›</button></div></div><div class="calendar-weekdays">${weekdays.map(name => `<span>${name}</span>`).join('')}</div><div class="calendar-grid">${cells.join('')}</div></section><section class="card calendar-day-summary"><div class="card-head"><div><h2>${state.date.replaceAll('-', '.')} 기록</h2><p class="muted">날짜를 눌러 그날의 업무·배움·소비 기록을 확인하세요.</p></div><span class="pill">${state.date === today ? '오늘' : '선택한 날짜'}</span></div><div class="calendar-record-list">${records.map(record => `<div><span>${record}</span></div>`).join('')}</div>${entries.length ? `<div class="calendar-entries"><strong>기록 내용</strong>${entries.map(entry => `<div class="calendar-entry"><span class="pill">${entry.label}</span><span>${esc(entry.title)}</span></div>`).join('')}</div>` : ''}${notes.length ? `<div class="calendar-notes"><strong>메모</strong>${notes.map(note => `<button type="button" class="calendar-note" data-note-view="${esc(note.id)}"><span>${esc(note.title)}</span><small>${esc(note.createdAt || state.date)}</small></button>`).join('')}</div>` : '<p class="empty">이 날짜에는 메모가 없어요.</p>'}</section>`;
+}
