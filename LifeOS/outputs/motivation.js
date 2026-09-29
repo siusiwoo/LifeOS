@@ -72,6 +72,21 @@ function shiftMonth(date, amount) {
   return dateKey(value);
 }
 
+function calendarSearchResults(query) {
+  const clean = String(query || '').trim().toLowerCase();
+  if (!clean) return '<p class="calendar-search-empty">메모 제목이나 본문을 검색해 보세요.</p>';
+  const results = [];
+  for (const [date, day] of Object.entries(Repository.data.days || {})) {
+    for (const note of day.notes || []) {
+      const haystack = `${note.title || ''} ${note.body || ''}`.toLowerCase();
+      if (haystack.includes(clean)) results.push({date, note});
+    }
+  }
+  results.sort((a, b) => b.date.localeCompare(a.date));
+  if (!results.length) return '<p class="calendar-search-empty">일치하는 메모가 없어요.</p>';
+  return results.map(({date, note}) => `<button type="button" class="calendar-search-result" data-calendar-result-date="${esc(date)}" data-calendar-result-note="${esc(note.id)}"><span><strong>${esc(note.title || '제목 없는 메모')}</strong><small>${esc((note.body || '').replace(/\s+/g, ' ').slice(0, 90) || '본문 없음')}</small></span><time>${esc(date)}</time></button>`).join('');
+}
+
 function calendarView() {
   const selected = parseDate(state.date);
   const year = selected.getFullYear();
@@ -105,5 +120,5 @@ function calendarView() {
     ...day.expenses.map(item => ({label: '소비', title: `${item.title} · ${won(item.amount)}원` })),
     ...day.income.map(item => ({label: '수입', title: `${item.title} · ${won(item.amount)}원` }))
   ];
-  return `<section class="card calendar-card"><div class="card-head"><div class="card-title"><span class="section-icon">${svg('calendar')}</span><h2>${year}.${String(month + 1).padStart(2, '0')}</h2></div><div class="calendar-month-controls"><button type="button" class="icon-btn" data-calendar-month="-1" aria-label="이전 달">‹</button><button type="button" class="icon-btn" data-calendar-month="1" aria-label="다음 달">›</button></div></div><div class="calendar-weekdays">${weekdays.map(name => `<span>${name}</span>`).join('')}</div><div class="calendar-grid">${cells.join('')}</div></section><section class="card calendar-day-summary"><div class="card-head"><div><h2>${state.date.replaceAll('-', '.')} 기록</h2><p class="muted">날짜를 눌러 그날의 업무·배움·소비 기록을 확인하세요.</p></div><span class="pill">${state.date === today ? '오늘' : '선택한 날짜'}</span></div><div class="calendar-record-list">${records.map(record => `<div><span>${record}</span></div>`).join('')}</div>${entries.length ? `<div class="calendar-entries"><strong>기록 내용</strong>${entries.map(entry => `<div class="calendar-entry"><span class="pill">${entry.label}</span><span>${esc(entry.title)}</span></div>`).join('')}</div>` : ''}${notes.length ? `<div class="calendar-notes"><strong>메모</strong>${notes.map(note => `<button type="button" class="calendar-note" data-note-view="${esc(note.id)}"><span>${esc(note.title)}</span><small>${esc(note.createdAt || state.date)}</small></button>`).join('')}</div>` : '<p class="empty">이 날짜에는 메모가 없어요.</p>'}</section>`;
+  return `<section class="card calendar-card"><div class="card-head"><div class="card-title"><span class="section-icon">${svg('calendar')}</span><h2>${year}.${String(month + 1).padStart(2, '0')}</h2></div><div class="calendar-month-controls"><button type="button" class="icon-btn" data-calendar-month="-1" aria-label="이전 달">‹</button><button type="button" class="icon-btn" data-calendar-month="1" aria-label="다음 달">›</button></div></div><div class="calendar-search"><label for="calendar-search-input">기록 검색</label><input id="calendar-search-input" data-calendar-search type="search" value="${esc(state.calendarQuery || '')}" placeholder="메모에서 검색…" autocomplete="off"></div><div class="calendar-search-results" data-calendar-search-results>${calendarSearchResults(state.calendarQuery)}</div><div class="calendar-weekdays">${weekdays.map(name => `<span>${name}</span>`).join('')}</div><div class="calendar-grid">${cells.join('')}</div></section><section class="card calendar-day-summary"><div class="card-head"><div><h2>${state.date.replaceAll('-', '.')} 기록</h2><p class="muted">날짜를 눌러 그날의 업무·배움·소비 기록을 확인하세요.</p></div><span class="pill">${state.date === today ? '오늘' : '선택한 날짜'}</span></div><div class="calendar-record-list">${records.map(record => `<div><span>${record}</span></div>`).join('')}</div>${entries.length ? `<div class="calendar-entries"><strong>기록 내용</strong>${entries.map(entry => `<div class="calendar-entry"><span class="pill">${entry.label}</span><span>${esc(entry.title)}</span></div>`).join('')}</div>` : ''}${notes.length ? `<div class="calendar-notes"><strong>메모</strong>${notes.map(note => `<button type="button" class="calendar-note" data-note-view="${esc(note.id)}"><span>${esc(note.title)}</span><small>${esc(note.createdAt || state.date)}</small></button>`).join('')}</div>` : '<p class="empty">이 날짜에는 메모가 없어요.</p>'}</section>`;
 }
