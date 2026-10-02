@@ -122,14 +122,46 @@ html,body{overflow-x:hidden}
 @media(max-width:600px){.pomodoro-time{font-size:46px}.pomodoro-footer{align-items:flex-start;flex-direction:column}.pomodoro-actions{width:100%;justify-content:space-between}}
 .pomodoro-settings{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0 8px}.pomodoro-settings label{display:grid;gap:5px;font-size:11px;color:var(--muted)}.pomodoro-settings select{width:100%;border:1px solid #dfe5d8;border-radius:8px;padding:7px;background:#fff;color:var(--ink);font-size:12px}.pomodoro-settings select:disabled{opacity:.65}.pomodoro-card #pomodoro-phase{white-space:nowrap}
 @media(max-width:600px){.pomodoro-settings{grid-template-columns:1fr 1fr}.pomodoro-settings label:last-child{grid-column:1/-1}}
-.memo-list{max-height:248px;overflow:hidden;transition:max-height .22s ease}.memo-card.memo-expanded .memo-list{max-height:none;overflow:visible}.memo-card .memo-more{width:calc(100% - 8.3333%);margin:8px auto 0;border:1px solid var(--line);border-radius:12px;overflow:hidden}.memo-card .memo-more[hidden]{display:none}.memo-card .memo-more>summary{padding:13px 16px;background:#fbfbfa;color:var(--muted);font-weight:500}.memo-card .memo-more>summary:hover{background:#f0f1ef;color:var(--green)}
-@media(max-width:600px){.memo-card .memo-more{width:calc(100% - 4%)}}
-.calendar-card{max-width:980px;margin:0 auto 18px}.calendar-month-controls{display:flex;gap:4px}.calendar-weekdays,.calendar-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}.calendar-weekdays{margin-bottom:8px;color:var(--muted);font-size:11px;text-align:center}.calendar-cell{min-height:58px;border:1px solid var(--line);border-radius:12px;background:#fafaf9;padding:9px;display:flex;flex-direction:column;align-items:center;justify-content:space-between;color:var(--ink);font-size:14px}.calendar-cell:hover{background:#f0f1ef}.calendar-cell.active{background:var(--green);border-color:var(--green);color:#fff}.calendar-cell.has-record{font-weight:700}.calendar-cell i{width:6px;height:6px;border-radius:50%;background:#8d9691}.calendar-cell.active i{background:#fff}.calendar-empty{border-color:transparent;background:transparent}.calendar-day-summary{max-width:980px;margin:0 auto}.calendar-day-summary .card-head{align-items:flex-start}.calendar-record-list{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.calendar-record-list>div{background:#f3f3f1;border:1px solid #e4e5e3;border-radius:11px;padding:12px;font-size:12px}.calendar-notes{margin-top:18px;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:7px}.calendar-notes strong{font-size:12px}.calendar-note{display:flex;justify-content:space-between;gap:12px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;text-align:left;background:#fafaf9}.calendar-note small{white-space:nowrap}.mobile-topbar,.mobile-menu-toggle,.mobile-nav-scrim{display:none}
-@media(max-width:800px){.mobile-topbar{display:flex;position:fixed;top:12px;right:15px;z-index:40}.mobile-topbar .mobile-profile{display:flex;border:0;margin:0;padding:0;gap:7px}.mobile-topbar .avatar{width:32px;height:32px}.mobile-topbar .account-action strong{font-size:11px!important}.mobile-topbar .account-action small{font-size:9px}.mobile-menu-toggle{display:block;position:fixed;top:13px;left:14px;z-index:45;width:34px;height:34px;border:1px solid var(--line);border-radius:10px;background:#fff;font-size:18px;line-height:1}.mobile-nav-scrim{position:fixed;inset:0;background:#1e242133;z-index:30}.mobile-nav-scrim:not([hidden]){display:block}.sidebar{position:fixed;inset:0 auto 0 0;width:280px;transform:translateX(-102%);transition:transform .24s ease;z-index:35;display:flex;flex-direction:column;align-items:stretch;padding:72px 22px 24px;border-right:1px solid var(--line);border-bottom:0}.sidebar.menu-open{transform:translateX(0);box-shadow:16px 0 30px #0002}.sidebar .tagline{display:block}.sidebar .nav-label{display:block}.sidebar nav{display:grid;gap:7px}.sidebar .nav{justify-content:flex-start;font-size:14px;padding:12px 14px}.sidebar .side-note{display:block}.sidebar .profile{display:flex}.main{margin-left:0;padding:70px 17px 28px}.calendar-weekdays,.calendar-grid{gap:5px}.calendar-cell{min-height:48px;padding:7px 4px;font-size:12px}.calendar-record-list{grid-template-columns:1fr 1fr}.calendar-card,.calendar-day-summary{max-width:none}}
-@media(max-width:430px){.mobile-topbar .mobile-profile .account-action small{display:none}.mobile-topbar .mobile-profile .account-action strong{max-width:110px;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.calendar-record-list{grid-template-columns:1fr}.calendar-cell{min-height:43px}.calendar-weekdays{font-size:10px}}
-.image-help{font-size:10px;color:var(--muted)}.note-image-preview{display:block;width:100%;max-height:180px;object-fit:contain;border:1px solid var(--line);border-radius:10px;background:#f5f5f3;padding:5px}.note-view-image{display:block;width:100%;max-height:360px;object-fit:contain;border:1px solid var(--line);border-radius:12px;background:#f5f5f3;margin-top:15px;padding:6px}
-.note-view-image{cursor:zoom-in}.image-view-dialog{width:min(92vw,1100px);height:min(92vh,820px);max-width:none;max-height:none;padding:24px;background:#202321eF;border:0;border-radius:16px;overflow:hidden}.image-view-dialog::backdrop{background:#111a;backdrop-filter:blur(4px)}.image-view-dialog img{width:100%;height:100%;object-fit:contain}.image-view-close{position:absolute;top:10px;right:12px;width:34px;height:34px;border-radius:50%;background:#fff;color:#343837;font-size:18px;z-index:1}
-.tree-history-more{margin-top:6px;border:1px solid var(--line);border-radius:11px;overflow:hidden}.tree-history-more summary{cursor:pointer;padding:11px 13px;color:var(--muted);font-size:11px;background:#fafaf9}.tree-history-more summary:hover{background:#f0f1ef;color:var(--ink)}.tree-history-more .tree-history{padding:0 13px}
-.record-more{margin-top:5px;border:1px solid var(--line);border-radius:10px;overflow:hidden}.record-more summary{cursor:pointer;padding:10px 12px;color:var(--muted);font-size:11px;background:#fafaf9}.record-more summary:hover{background:#f0f1ef;color:var(--ink)}.record-more .task,.record-more .learning{margin:0 12px}
-.calendar-entries{margin-top:18px;border-top:1px solid var(--line);padding-top:14px;display:grid;gap:7px}.calendar-entries>strong{font-size:12px}.calendar-entry{display:flex;align-items:center;gap:9px;padding:9px 10px;border:1px solid var(--line);border-radius:9px;background:#fafaf9;font-size:12px}.calendar-entry .pill{flex:0 0 auto}
-.calendar-search{display:grid;gap:6px;margin:2px 0 14px}.calendar-search label{font-size:11px;color:var(--muted)}.calendar-search input{width:100%;border:1px solid var(--line);border-radius:10px;padding:10px 12px;background:#fafaf9;color:var(--ink)}.calendar-search-results{display:grid;gap:6px;margin-bottom:15px}.calendar-search-empty{font-size:11px;color:var(--muted);padding:3px 0}.calendar-search-result{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fafaf9;text-align:left}.calendar-search-result:hover{background:#f0f1ef}.calendar-search-result span{display:grid;gap:2px;min-width:0}.calendar-search-result strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.calendar-search-result small{font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.calendar-search-result time{font-size:10px;color:var(--muted);white-space:nowrap}
+
+
+/* Reviews for unfinished tasks; scoped to the Work card and its dialog. */
+.task-review-link{display:inline-block;margin-top:5px;white-space:nowrap;color:var(--muted)}
+.work-review-list{margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.work-review-heading{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.work-review-heading h3{font-size:14px}
+.work-review-heading>span,.work-review-list>p{font-size:11px;color:var(--muted)}
+.work-review-list>p{margin:5px 0 10px;line-height:1.7}
+.work-review-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.work-review-row:last-child{border-bottom:0}
+.work-review-row>div{min-width:0;flex:1}
+.work-review-row strong{display:block;font-size:13px;font-weight:550;overflow-wrap:anywhere}
+.work-review-row small{display:block;margin-top:3px;font-size:11px;color:var(--muted)}
+.work-review-row .task-review-link{flex-shrink:0;margin:0}
+.work-review-more>summary{cursor:pointer;padding:12px 4px;font-size:12px;color:var(--muted)}
+.task-review-dialog{width:500px;max-height:calc(100dvh - 32px);overflow:auto}
+.task-review-context{padding:13px 15px;border:1px solid var(--line);border-radius:10px;background:#f5f5f4;overflow-wrap:anywhere}
+.task-review-context strong{font-size:14px}
+.task-review-context p,.task-review-saved{font-size:11px;color:var(--muted);margin-top:5px}
+.task-review-help{font-size:12px;color:var(--muted);line-height:1.8;margin:12px 0 18px}
+.task-review-dialog .form-grid textarea{min-height:105px}
+.task-review-saved{margin-top:12px}
+@media(max-width:600px){.task-review-dialog{padding:20px}.task-review-dialog textarea{font-size:16px}.work-review-row{gap:8px}.work-review-row strong{font-size:13px}}
+
+
+/* Reflection page: daily note and reviews of unfinished tasks. */
+.review-page-stack{display:grid;grid-template-columns:minmax(0,1fr);gap:21px}
+.review-page-stack>.reflection{min-height:190px}
+.review-page-stack .quote{max-width:100%}
+.review-tasks-card>.card-head{margin-bottom:6px;flex-wrap:wrap}
+.review-date-note,.review-page-help{color:var(--muted);font-size:12px;line-height:1.8}
+.review-page-help{margin-top:3px;margin-bottom:15px}
+.review-task{padding:5px 0 15px;border-bottom:1px solid var(--line)}
+.review-task:last-child{border-bottom:0;padding-bottom:0}
+.review-task>.work-review-row{border-bottom:0}
+.review-task-notes{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0}
+.review-task-notes>div{background:#f5f5f4;border:1px solid var(--line);border-radius:10px;padding:13px 15px;min-width:0}
+.review-task-notes dt{font-size:11px;color:var(--muted);margin-bottom:6px}
+.review-task-notes dd{margin:0;font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere}
+.review-earlier{margin-top:18px;border-top:1px solid var(--line)}
+.review-earlier>summary{cursor:pointer;padding:14px 4px;color:var(--muted);font-size:12px}
+@media(max-width:600px){.review-task-notes{grid-template-columns:1fr;gap:8px}.review-page-stack{gap:16px}.review-tasks-card .card-title h2{font-size:17px}.review-page-stack>.reflection{min-height:180px}.review-view .intro{display:block}.review-view .intro h1{font-size:28px;word-break:keep-all}.review-view .intro p{max-width:none}.review-view .intro>#add-record{margin-top:14px}}
