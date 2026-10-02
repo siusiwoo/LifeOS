@@ -235,6 +235,40 @@ render=function(){renderWithRemind();replaceRemindText()};
 const openTaskReviewWithRemind=openTaskReview;
 openTaskReview=function(date,id){openTaskReviewWithRemind(date,id);replaceRemindText(taskReviewDialog)};
 render();
+/* Memo image attachments: file picker plus image paste (Ctrl+C / Ctrl+V). */
+const noteImageLimit=3;
+const noteImageBytes=2*1024*1024;
+function noteImages(record){return Array.isArray(record?.images)?record.images.filter(src=>typeof src==='string'&&src.startsWith('data:image/')):[]}
+function noteImageMarkup(images=[],className='note-images',editable=false){
+  return images.length?`<div class="${className}">${images.map((src,index)=>`<div class="note-image-thumb"><img src="${esc(src)}" alt="메모 첨부 이미지 ${index+1}" loading="lazy">${editable?`<button type="button" class="note-image-remove" data-note-image-remove="${index}" aria-label="첨부 이미지 삭제">×</button>`:''}</div>`).join('')}</div>`:'';
+}
+function readNoteImage(file){return new Promise((resolve,reject)=>{if(!file||!file.type.startsWith('image/'))return reject(Error('이미지 파일만 첨부할 수 있어요.'));if(file.size>noteImageBytes)return reject(Error('이미지는 한 장당 2MB 이하로 첨부해 주세요.'));const reader=new FileReader();reader.onload=()=>resolve(String(reader.result));reader.onerror=()=>reject(Error('이미지를 읽지 못했어요.'));reader.readAsDataURL(file)})}
+const fieldsBeforeNoteImages=fields;
+fields=function(kind,record={}){
+  if(kind!=='note')return fieldsBeforeNoteImages(kind,record);
+  const current=noteImages(record);state.editing.noteImages=current.slice();
+  $('#dynamic-fields').innerHTML=`<label>메모 제목<input name="title" required maxlength="100" value="${esc(record.title||'')}" placeholder="메모 제목"></label><label>메모 본문<textarea name="body" maxlength="2000" placeholder="내용을 적어 보세요.">${esc(record.body||'')}</textarea></label><label class="note-image-field">사진 첨부<input name="noteImages" type="file" accept="image/*" multiple><span class="note-image-help">최대 3장 · 한 장당 2MB · 이미지를 복사한 뒤 본문에 Ctrl+V로 붙여넣을 수 있어요.</span><div id="note-image-preview">${noteImageMarkup(current,'note-image-preview',true)}</div></label>`;
+  const preview=$('#note-image-preview'),input=$('input[name="noteImages"]'),body=$('textarea[name="body"]');
+  const refresh=()=>{state.editing.noteImages=state.editing.noteImages||[];preview.innerHTML=noteImageMarkup(state.editing.noteImages,'note-image-preview',true)};
+  const addFiles=async files=>{for(const file of files){if(state.editing.noteImages.length>=noteImageLimit){toast('메모 사진은 최대 3장까지 첨부할 수 있어요.');break}try{state.editing.noteImages.push(await readNoteImage(file))}catch(error){toast(error.message)}}refresh()};
+  input.addEventListener('change',event=>addFiles(Array.from(event.target.files||[])));
+  body.addEventListener('paste',event=>{const files=Array.from(event.clipboardData?.items||[]).filter(item=>item.kind==='file'&&item.type.startsWith('image/')).map(item=>item.getAsFile()).filter(Boolean);if(files.length){event.preventDefault();addFiles(files);toast('복사한 이미지를 메모에 붙였어요.')}});
+  preview.addEventListener('click',event=>{const remove=event.target.closest('[data-note-image-remove]');if(!remove)return;state.editing.noteImages.splice(Number(remove.dataset.noteImageRemove),1);refresh()});
+};
+const openNoteViewBeforeImages=openNoteView;
+openNoteView=function(id){
+  const note=Repository.getDay(state.date).notes.find(item=>item.id===id);if(!note)return openNoteViewBeforeImages(id);
+  noteViewDialog.innerHTML=`<div class="modal-head"><h2>${esc(note.title)}</h2><button type="button" class="icon-btn" data-note-close aria-label="메모 닫기">✕</button></div><p class="note-view-date">${esc(note.createdAt||state.date)}</p><div class="note-view-body">${esc(note.body||'내용 없음')}</div>${noteImageMarkup(noteImages(note),'note-view-images')}<div class="modal-actions"><button type="button" class="outline" data-note-close>닫기</button><button type="button" class="primary" data-note-edit="${esc(note.id)}">수정</button></div>`;
+  noteViewDialog.showModal();
+};
+const recordSubmitBeforeNoteImages=$('#record-form').onsubmit;
+$('#record-form').onsubmit=function(event){
+  const edit=state.editing,isNote=edit?.kind==='note',images=isNote?(edit.noteImages||[]).slice():null,title=isNote?String(new FormData(event.target).get('title')||'').trim():'';
+  const result=recordSubmitBeforeNoteImages.call(this,event);
+  if(isNote&&title){const records=Repository.getDay(edit.date).notes||[];const saved=edit.id?records.find(item=>item.id===edit.id):[...records].reverse().find(item=>item.title===title&&item.createdAt===edit.date);if(saved){saved.images=images;Repository.save();queueRemoteSync(edit.date);render()}}
+  return result;
+};
+render();
 </script>
 </body>
 </html>
