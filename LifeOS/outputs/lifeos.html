@@ -41,6 +41,7 @@
 <dialog id="record-dialog" aria-labelledby="dialog-title"><form id="record-form"><div class="modal-head"><h2 id="dialog-title">기록 추가</h2><button type="button" id="close-dialog" aria-label="닫기">✕</button></div><p id="dialog-date" class="muted" style="font-size:12px;margin-bottom:17px"></p><div class="form-grid"><label id="kind-label">영역<select name="kind" id="record-kind"><option value="work">Work · 업무</option><option value="expense">Money · 소비</option><option value="income">Money · 수입</option><option value="reflection">회고 · 오늘의 한 줄</option></select></label><div id="dynamic-fields" class="form-grid"></div></div><div class="modal-actions"><button type="button" class="outline" id="cancel-dialog">취소</button><button type="submit" class="primary">저장하기</button></div></form></dialog><div id="toast" class="toast" role="status" hidden></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/api/supabase-config"></script>
+<script src="/motivation.js"></script>
 <script>
 window.lifeosSupabase = null;
 if (window.supabase && window.LIFEOS_SUPABASE_CONFIG && window.LIFEOS_SUPABASE_CONFIG.url && window.LIFEOS_SUPABASE_CONFIG.key) {
@@ -267,6 +268,15 @@ $('#record-form').onsubmit=function(event){
   const result=recordSubmitBeforeNoteImages.call(this,event);
   if(isNote&&title){const records=Repository.getDay(edit.date).notes||[];const saved=edit.id?records.find(item=>item.id===edit.id):[...records].reverse().find(item=>item.title===title&&item.createdAt===edit.date);if(saved){saved.images=images;Repository.save();queueRemoteSync(edit.date);render()}}
   return result;
+};
+icons.tree='<path d="M12 2 5 10h3l-5 7h7v5h4v-5h7l-5-7h3L12 2Z"/>';
+views.tree={name:'Tree',title:'작은 실천이 숲이 되도록.',description:'오늘의 기록으로 천천히 자라는 나만의 숲.',eyebrow:'GROW AT YOUR OWN PACE'};
+const renderBeforeTree=render;
+render=function(){
+  if(state.view!=='tree'){$('#add-record').hidden=false;return renderBeforeTree()}
+  $('.main').className='main detail-view';const config=views.tree,day=Repository.getDay(state.date);
+  $('#navigation').innerHTML=Object.entries(views).map(([id,v])=>`<button class="nav ${state.view===id?'active':''}" data-view="${id}" ${state.view===id?'aria-current="page"':''}>${svg(id)}${v.name}${state.view===id?'<span class="nav-dot"></span>':''}</button>`).join('');
+  $('#breadcrumb').textContent=config.name;$('#page-title').textContent=config.title;$('#page-description').textContent=config.description;$('#eyebrow').textContent=config.eyebrow;renderDate();$('#add-record').hidden=true;$('#content').innerHTML=`<div class="view">${treeView()}</div>`;updateStorageStatus();replaceRemindText();
 };
 render();
 </script>
