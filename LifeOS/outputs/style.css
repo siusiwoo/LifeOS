@@ -62,6 +62,18 @@
 @media(max-width:600px){
   .memo-card .memo-item,.memo-card .memo-more{width:calc(100% - 4%)}
 }
+
+.weekly-goals-card{margin-bottom:21px}
+.weekly-goals-card .card-head{align-items:flex-start}
+.weekly-goals-card .card-head h2{margin-bottom:3px}
+.weekly-goal-list{display:grid;gap:8px;margin-top:14px}
+.weekly-goal-row{display:flex;align-items:center;gap:9px;min-width:0;padding:7px 0;border-bottom:1px solid #eef0e9}
+.weekly-goal-row input[type="checkbox"]{width:18px;height:18px;flex:0 0 auto;accent-color:var(--green)}
+.weekly-goal-input{min-width:0;flex:1;border:1px solid transparent;border-radius:8px;padding:8px 9px;background:#f7f8f5;color:var(--ink)}
+.weekly-goal-input:focus{border-color:var(--line);background:#fff;outline:none}
+.weekly-goal-input.is-done{text-decoration:line-through;color:var(--muted)}
+.weekly-goal-actions{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:13px;font-size:11px;color:var(--muted)}
+@media(max-width:600px){.weekly-goals-card{margin-bottom:16px}.weekly-goals-card .card-head{display:block}.weekly-goals-card .card-head .pill{display:inline-block;margin-top:8px}.weekly-goal-actions{align-items:flex-start;flex-direction:column;gap:5px}.weekly-goal-input{font-size:14px}}
 /* Detail summaries use the requested 12-column proportions. */
 .detail-view .stats-work{grid-template-columns:repeat(2,minmax(0,1fr))}
 .detail-view .stats-growth{grid-template-columns:minmax(0,1fr)}
@@ -177,3 +189,14 @@ html,body{overflow-x:hidden}
 .note-view-images{margin-top:16px}
 .note-view-images .note-image-thumb{width:min(220px,100%);height:170px}
 @media(max-width:600px){.note-view-images .note-image-thumb{width:100%;height:210px}}
+
+/* Keep long memos readable on narrow screens. */
+@media(max-width:600px){
+  .memo-row{align-items:flex-start;min-width:0}
+  .memo-card .memo-item{align-items:flex-start;min-width:0;gap:8px;padding-top:12px;padding-bottom:12px}
+  .memo-title{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;word-break:break-word;line-height:1.5;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:4}
+  .memo-date{flex-shrink:0;line-height:1.5}
+  .memo-delete{flex-shrink:0}
+  .note-view-dialog{max-height:calc(100dvh - 24px);overflow:auto}
+  .note-view-body{max-height:45dvh;overflow:auto}
+}
