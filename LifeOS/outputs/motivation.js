@@ -77,14 +77,14 @@ function updateWeeklyGoal(id,patch) {
   const {goals}=weeklyGoals();const goal=goals.find(item=>item.id===id);if(!goal)return;
   Object.assign(goal,patch);if(!goal.title.trim())goal.done=false;Repository.save();syncWeeklyPoints(weeklyStart(state.date));syncCategoriesToSupabase();
   const filled=goals.filter(item=>item.title.trim()),completed=filled.filter(item=>item.done);
-  if(filled.length===goals.length&&filled.length===completed.length){render();toast('이번 주 목표를 모두 완료했어요. Tree 포인트 5점을 얻었어요.');return}render();
+  if(filled.length>0&&filled.length===completed.length){render();toast('이번 주 목표를 모두 완료했어요. Tree 포인트 5점을 얻었어요.');return}render();
 }
 function syncWeeklyPoints(key) {
   const settings=Repository.data.motivation ||= {},events=settings.treeEvents ||= {},goals=settings.weeklyGoals?.[key]||[];
   Object.keys(events).filter(id=>id.startsWith(`weekly:${key}:`)).forEach(id=>delete events[id]);
   const filled=goals.filter(goal=>String(goal.title||'').trim()),completed=filled.filter(goal=>goal.done);
   completed.forEach(goal=>{events[`weekly:${key}:goal:${goal.id}`]={kind:'weekly',date:key,title:String(goal.title||'주간 목표 완료')}});
-  if(filled.length===goals.length&&filled.length>0&&completed.length===filled.length){for(let i=0;i<5;i++)events[`weekly:${key}:bonus:${i}`]={kind:'weekly',date:key,title:'이번 주 목표 전체 완료 보너스'}}
+  if(filled.length>0&&completed.length===filled.length){for(let i=0;i<5;i++)events[`weekly:${key}:bonus:${i}`]={kind:'weekly',date:key,title:'이번 주 목표 전체 완료 보너스'}}
   Repository.save();
 }
 function removeWeeklyGoal(id) {const {goals}=weeklyGoals();const index=goals.findIndex(item=>item.id===id);if(index<0)return;goals.splice(index,1);Repository.save();syncCategoriesToSupabase();render()}
@@ -177,3 +177,4 @@ function calendarView() {
   ];
   return `<section class="card calendar-card"><div class="card-head"><div class="card-title"><span class="section-icon">${svg('calendar')}</span><h2>${year}.${String(month + 1).padStart(2, '0')}</h2></div><div class="calendar-month-controls"><button type="button" class="icon-btn" data-calendar-month="-1" aria-label="이전 달">‹</button><button type="button" class="icon-btn" data-calendar-month="1" aria-label="다음 달">›</button></div></div><div class="calendar-search"><label for="calendar-search-input">기록 검색</label><input id="calendar-search-input" data-calendar-search type="search" value="${esc(state.calendarQuery || '')}" placeholder="메모에서 검색…" autocomplete="off"></div><div class="calendar-search-results" data-calendar-search-results>${calendarSearchResults(state.calendarQuery)}</div><div class="calendar-weekdays">${weekdays.map(name => `<span>${name}</span>`).join('')}</div><div class="calendar-grid">${cells.join('')}</div></section><section class="card calendar-day-summary"><div class="card-head"><div><h2>${state.date.replaceAll('-', '.')} 기록</h2><p class="muted">날짜를 눌러 그날의 업무·배움·소비 기록을 확인하세요.</p></div><span class="pill">${state.date === today ? '오늘' : '선택한 날짜'}</span></div><div class="calendar-record-list">${records.map(record => `<div><span>${record}</span></div>`).join('')}</div>${entries.length ? `<div class="calendar-entries"><strong>기록 내용</strong>${entries.map(entry => `<div class="calendar-entry"><span class="pill">${entry.label}</span><span>${esc(entry.title)}</span></div>`).join('')}</div>` : ''}${notes.length ? `<div class="calendar-notes"><strong>메모</strong>${notes.map(note => `<button type="button" class="calendar-note" data-note-view="${esc(note.id)}"><span>${esc(note.title)}</span><small>${esc(note.createdAt || state.date)}</small></button>`).join('')}</div>` : '<p class="empty">이 날짜에는 메모가 없어요.</p>'}</section>`;
 }
+
