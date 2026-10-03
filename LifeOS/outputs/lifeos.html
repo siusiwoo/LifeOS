@@ -222,9 +222,9 @@ window.addEventListener('lifeos-auth', event => {
 });
 if (window.lifeosCurrentUser) syncFromSupabase(window.lifeosCurrentUser);
 function expenseTotal(){return Object.values(Repository.data.days).reduce((sum,day)=>sum+(day.expenses||[]).reduce((s,r)=>s+Number(r.amount||0),0),0)}
-function weeklyWorkSummary(date){const d=parseDate(date),start=shift(date,-((d.getDay()+6)%7));let total=0,done=0;for(let i=0;i<7;i++){const day=Repository.getDay(shift(start,i));total+=day.work.length;done+=day.work.filter(item=>item.done).length}return {total,done}}
+function weeklyWorkSummary(date){const key=weeklyStart(date),goals=Repository.data.motivation?.weeklyGoals?.[key]||[],filled=goals.filter(goal=>String(goal.title||'').trim());return {total:filled.length,done:filled.filter(goal=>goal.done).length}}
 const statsBeforeTotalExpense=stats;
-stats=function(day,view=state.view){const html=statsBeforeTotalExpense(day,view);if(view!=='dashboard'&&view!=='money')return html;const totalCard=`<div class="stat"><div class="stat-label">총 소비 ${svg('money')}</div><div class="stat-value">${won(expenseTotal())} <span>원</span></div><small>모든 날짜의 소비 합계</small></div>`;const week=weeklyWorkSummary(state.date),weeklyCard=view==='dashboard'?`<div class="stat"><div class="stat-label">이번 주 업무 완료 ${svg('work')}</div><div class="stat-value">${week.done} <span>/ ${week.total}개</span></div><small>월요일부터 일요일까지</small></div>`:'';return html.replace('선택한 날짜의 소비 합계</small></div>','선택한 날짜의 소비 합계</small></div>'+totalCard+weeklyCard)};
+stats=function(day,view=state.view){const html=statsBeforeTotalExpense(day,view);if(view!=='dashboard'&&view!=='money')return html;const totalCard=`<div class="stat"><div class="stat-label">총 소비 ${svg('money')}</div><div class="stat-value">${won(expenseTotal())} <span>원</span></div><small>모든 날짜의 소비 합계</small></div>`;const week=weeklyWorkSummary(state.date),weeklyCard=view==='dashboard'?`<div class="stat"><div class="stat-label">이번 주 목표 완료 ${svg('work')}</div><div class="stat-value">${week.done} <span>/ ${week.total}개</span></div><small>입력한 목표만 집계</small></div>`:'';return html.replace('선택한 날짜의 소비 합계</small></div>','선택한 날짜의 소비 합계</small></div>'+totalCard+weeklyCard)};
 function replaceRemindText(root=document){
   const walker=document.createTreeWalker(root,NodeFilter.SHOW_TEXT);
   const nodes=[];let node;while(node=walker.nextNode())nodes.push(node);
@@ -275,6 +275,7 @@ views.tree={name:'Tree',title:'작은 실천이 숲이 되도록.',description:'
 const renderBeforeTree=render;
 render=function(){
   if(state.view!=='tree'){$('#add-record').hidden=false;return renderBeforeTree()}
+  if(Repository.data.motivation?.weeklyGoals?.[weeklyStart(state.date)])syncWeeklyPoints(weeklyStart(state.date));
   rememberGrowth();
   $('.main').className='main detail-view';const config=views.tree,day=Repository.getDay(state.date);
   $('#navigation').innerHTML=Object.entries(views).map(([id,v])=>`<button class="nav ${state.view===id?'active':''}" data-view="${id}" ${state.view===id?'aria-current="page"':''}>${svg(id)}${v.name}${state.view===id?'<span class="nav-dot"></span>':''}</button>`).join('');

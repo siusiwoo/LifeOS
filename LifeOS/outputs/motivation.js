@@ -71,18 +71,21 @@ function weeklyGoalsView() {
 function addWeeklyGoalSlots() {
   const {goals}=weeklyGoals();
   for(let i=0;i<5;i++)goals.push({id:`goal-${Date.now()}-${i}-${Math.random().toString(36).slice(2,7)}`,title:'',done:false});
-  Repository.save();syncCategoriesToSupabase();render();toast('이번 주 목표 5개를 더 준비했어요.');
+  Repository.save();syncWeeklyPoints(weeklyStart(state.date));syncCategoriesToSupabase();render();toast('이번 주 목표 5개를 더 준비했어요.');
 }
 function updateWeeklyGoal(id,patch) {
   const {goals}=weeklyGoals();const goal=goals.find(item=>item.id===id);if(!goal)return;
-  Object.assign(goal,patch);if(!goal.title.trim())goal.done=false;Repository.save();syncCategoriesToSupabase();
+  Object.assign(goal,patch);if(!goal.title.trim())goal.done=false;Repository.save();syncWeeklyPoints(weeklyStart(state.date));syncCategoriesToSupabase();
   const filled=goals.filter(item=>item.title.trim()),completed=filled.filter(item=>item.done);
-  if(filled.length===goals.length&&filled.length===completed.length){awardWeeklyBonus(weeklyStart(state.date));render();toast('이번 주 목표를 모두 완료했어요. Tree 포인트 5점을 얻었어요.');return}render();
+  if(filled.length===goals.length&&filled.length===completed.length){render();toast('이번 주 목표를 모두 완료했어요. Tree 포인트 5점을 얻었어요.');return}render();
 }
-function awardWeeklyBonus(key) {
-  const settings=Repository.data.motivation ||= {},events=settings.treeEvents ||= {};
-  for(let i=0;i<5;i++)events[`weekly:${key}:${i}`] ||= {kind:'weekly',date:key,title:'이번 주 목표 완료 보너스'};
-  Repository.save();syncCategoriesToSupabase();
+function syncWeeklyPoints(key) {
+  const settings=Repository.data.motivation ||= {},events=settings.treeEvents ||= {},goals=settings.weeklyGoals?.[key]||[];
+  Object.keys(events).filter(id=>id.startsWith(`weekly:${key}:`)).forEach(id=>delete events[id]);
+  const filled=goals.filter(goal=>String(goal.title||'').trim()),completed=filled.filter(goal=>goal.done);
+  completed.forEach(goal=>{events[`weekly:${key}:goal:${goal.id}`]={kind:'weekly',date:key,title:String(goal.title||'주간 목표 완료')}});
+  if(filled.length===goals.length&&filled.length>0&&completed.length===filled.length){for(let i=0;i<5;i++)events[`weekly:${key}:bonus:${i}`]={kind:'weekly',date:key,title:'이번 주 목표 전체 완료 보너스'}}
+  Repository.save();
 }
 function removeWeeklyGoal(id) {const {goals}=weeklyGoals();const index=goals.findIndex(item=>item.id===id);if(index<0)return;goals.splice(index,1);Repository.save();syncCategoriesToSupabase();render()}
 
