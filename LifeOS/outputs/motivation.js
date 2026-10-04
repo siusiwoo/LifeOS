@@ -66,12 +66,12 @@ function weeklyGoalsView() {
   const {key,goals} = weeklyGoals();
   const completed = goals.filter(goal=>goal.title.trim() && goal.done).length;
   const filled = goals.filter(goal=>goal.title.trim()).length;
-  return `<section class="card weekly-goals-card"><div class="card-head"><div><h2>이번 주 목표</h2><p class="muted">${key}부터 일요일까지 완수할 일을 적어 보세요.</p></div><span class="pill">${completed} / ${filled || goals.length} 완료</span></div><div class="weekly-goal-list">${goals.map((goal,index)=>`<div class="weekly-goal-row"><input type="checkbox" data-weekly-toggle="${esc(goal.id)}" ${goal.done?'checked':''} ${goal.title.trim()?'':'disabled'} aria-label="${index+1}번째 목표 완료"><input class="weekly-goal-input ${goal.done?'is-done':''}" data-weekly-title="${esc(goal.id)}" value="${esc(goal.title)}" maxlength="120" placeholder="${index+1}번째 목표를 입력하세요"><button type="button" class="delete-inline" data-weekly-remove="${esc(goal.id)}" aria-label="${index+1}번째 목표 삭제">×</button></div>`).join('')}</div><div class="weekly-goal-actions"><button type="button" class="text-btn" data-weekly-add>＋ 목표 5개 추가</button><span>${filled && filled===completed ? '목표를 모두 완료했어요. Tree 포인트 5점을 얻었어요.' : '이번 주에 꼭 끝낼 일을 작은 단위로 적어 보세요.'}</span></div></section>`;
+  return `<section class="card weekly-goals-card"><div class="card-head"><div><h2>이번 주 목표</h2><p class="muted">${key}부터 일요일까지 완수할 일을 적어 보세요.</p></div><span class="pill">${completed} / ${filled || goals.length} 완료</span></div><div class="weekly-goal-list">${goals.map((goal,index)=>`<div class="weekly-goal-row"><input type="checkbox" data-weekly-toggle="${esc(goal.id)}" ${goal.done?'checked':''} ${goal.title.trim()?'':'disabled'} aria-label="${index+1}번째 목표 완료"><input class="weekly-goal-input ${goal.done?'is-done':''}" data-weekly-title="${esc(goal.id)}" value="${esc(goal.title)}" maxlength="120" placeholder="${index+1}번째 목표를 입력하세요"><button type="button" class="delete-inline" data-weekly-remove="${esc(goal.id)}" aria-label="${index+1}번째 목표 삭제">×</button></div>`).join('')}</div><div class="weekly-goal-actions"><button type="button" class="text-btn" data-weekly-add>＋ 목표 추가</button><span>${filled && filled===completed ? '목표를 모두 완료했어요. Tree 포인트 5점을 얻었어요.' : '이번 주에 꼭 끝낼 일을 작은 단위로 적어 보세요.'}</span></div></section>`;
 }
 function addWeeklyGoalSlots() {
   const {goals}=weeklyGoals();
-  for(let i=0;i<5;i++)goals.push({id:`goal-${Date.now()}-${i}-${Math.random().toString(36).slice(2,7)}`,title:'',done:false});
-  Repository.save();syncWeeklyPoints(weeklyStart(state.date));syncCategoriesToSupabase();render();toast('이번 주 목표 5개를 더 준비했어요.');
+  goals.push({id:`goal-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,title:'',done:false});
+  Repository.save();syncWeeklyPoints(weeklyStart(state.date));syncCategoriesToSupabase();render();toast('이번 주 목표를 하나 더 준비했어요.');
 }
 function updateWeeklyGoal(id,patch) {
   const {goals}=weeklyGoals();const goal=goals.find(item=>item.id===id);if(!goal)return;
@@ -87,7 +87,7 @@ function syncWeeklyPoints(key) {
   if(filled.length>0&&completed.length===filled.length){for(let i=0;i<5;i++)events[`weekly:${key}:bonus:${i}`]={kind:'weekly',date:key,title:'이번 주 목표 전체 완료 보너스'}}
   Repository.save();
 }
-function removeWeeklyGoal(id) {const {goals}=weeklyGoals();const index=goals.findIndex(item=>item.id===id);if(index<0)return;goals.splice(index,1);Repository.save();syncCategoriesToSupabase();render()}
+function removeWeeklyGoal(id) {const {goals}=weeklyGoals();const index=goals.findIndex(item=>item.id===id);if(index<0)return;goals.splice(index,1);Repository.save();syncWeeklyPoints(weeklyStart(state.date));syncCategoriesToSupabase();render()}
 
 function treeView() {
   const m = treeSummary(Repository.data.motivation);
@@ -103,7 +103,7 @@ function treeView() {
   const recent = m.events.slice().sort((a,b)=>b.date.localeCompare(a.date));
   const renderHistory = items => `<ul class="tree-history">${items.map(e=>`<li><div><strong>${labels[e.kind]||'실천을 기록했어요'}</strong><p>${esc(e.title)}</p></div><time>${esc(e.date)}</time><span class="pill">+1</span></li>`).join('')}</ul>`;
   const history = recent.length ? `${renderHistory(recent.slice(0,5))}${recent.length>5?`<details class="tree-history-more"><summary>나머지 기록 ${recent.length-5}개 보기</summary>${renderHistory(recent.slice(5))}</details>`:''}` : '<p class="empty">업무를 완료하거나 소비·배움을 기록하면 나무가 자라요.</p>';
-  return `${tabs}<section class="card motivation-card tree-current"><div class="motivation-tree">${growthTree(m.stage)}<strong>${m.completed+1}번째 나무 · ${m.stages[m.stage].name}</strong><span>${m.completed?'새 씨앗도 천천히 키워봐요.':'작은 실천으로 첫 씨앗을 키워봐요.'}</span></div><div class="motivation-body"><div class="card-head"><h2>천천히 자라는 나의 나무</h2><span class="pill">누적 실천 ${m.total}개</span></div><p class="motivation-message">${next?`${next.name}까지 실천 ${next.at-m.progress}개 남았어요.`:`나무 완성까지 실천 ${100-m.progress}개 남았어요.`}</p><div class="weekly-numbers"><span>이 나무와 함께한 실천</span><strong>${m.progress} / 100</strong></div><div class="weekly-track" role="progressbar" aria-label="현재 나무 성장" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${m.progress}"><i style="width:${m.progress}%"></i></div><p class="motivation-help">업무 완료 · 소비 기록 · 배움 기록마다 한 걸음.<br>시간과 금액에 관계없이 각 기록은 한 번만 반영돼요.<br>실천 100개로 나무를 완성하면 새 씨앗이 시작돼요.<br>쉬는 날에도, 기록을 수정하거나 지워도 키운 나무는 남아요.</p></div></section>${weeklyGoalsView()}<section class="card"><div class="card-head"><h2>나무를 키운 기록</h2></div>${history}</section>`;
+  return `${tabs}<section class="card motivation-card tree-current"><div class="motivation-tree">${growthTree(m.stage)}<strong>${m.completed+1}번째 나무 · ${m.stages[m.stage].name}</strong><span>${m.completed?'새 씨앗도 천천히 키워봐요.':'작은 실천으로 첫 씨앗을 키워봐요.'}</span></div><div class="motivation-body"><div class="card-head"><h2>천천히 자라는 나의 나무</h2><span class="pill">누적 실천 ${m.total}개</span></div><p class="motivation-message">${next?`${next.name}까지 실천 ${next.at-m.progress}개 남았어요.`:`나무 완성까지 실천 ${100-m.progress}개 남았어요.`}</p><div class="weekly-numbers"><span>이 나무와 함께한 실천</span><strong>${m.progress} / 100</strong></div><div class="weekly-track" role="progressbar" aria-label="현재 나무 성장" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${m.progress}"><i style="width:${m.progress}%"></i></div><p class="motivation-help">업무 완료 · 소비 기록 · 배움 기록마다 한 걸음.<br>시간과 금액에 관계없이 각 기록은 한 번만 반영돼요.<br>실천 100개로 나무를 완성하면 새 씨앗이 시작돼요.<br>쉬는 날에도, 기록을 수정하거나 지워도 키운 나무는 남아요.</p></div></section><section class="card"><div class="card-head"><h2>나무를 키운 기록</h2></div>${history}</section>`;
 }
 document.addEventListener('click',event=>{
   const button=event.target.closest('button');

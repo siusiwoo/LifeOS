@@ -253,3 +253,35 @@ html,body{overflow-x:hidden}
   .topline .mobile-menu-button{width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;line-height:1;position:relative}
   .topline .mobile-menu-button::before{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;line-height:1}
 }
+
+
+
+/* Brand lockup: crisp lettering and a tagline aligned with the LifeOS wordmark. */
+.sidebar .brand-block{display:block;flex:0 0 auto;width:164px;max-width:100%;margin:0 0 24px;padding:0}
+.sidebar .brand-block .brand-image{display:block;width:100%;max-width:100%!important;height:auto;object-fit:contain}
+@media(max-width:800px){.sidebar .brand-block{width:174px;margin-bottom:28px}}
+/* Weekly goals live below notes in Work; Money history styles stay scoped. */
+.detail-view .memo-card + .weekly-goals-card{margin-top:21px}
+.stats-money .money-stat-history{display:flex;flex-direction:column}
+.stats-money .money-stat-history small{margin-bottom:12px}
+.stats-money .money-history-link{align-self:flex-end;margin-top:auto;padding:7px 0 0;min-height:32px}
+.money-history-dialog{width:620px;max-height:calc(100dvh - 28px);padding:26px;background:var(--paper);overflow:auto}
+.money-history-dialog[open]{display:flex;flex-direction:column}
+.money-history-dialog .modal-head{gap:12px;margin-bottom:6px;flex-shrink:0}
+.money-history-dialog .modal-head .icon-btn{flex-shrink:0;min-width:40px;min-height:40px}
+.money-history-period{font-size:12px;color:var(--muted);flex-shrink:0}
+.money-history-summary{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:16px;margin:18px 0 8px;border-radius:12px;background:var(--bg);flex-shrink:0}
+.money-history-summary span{font-size:13px;color:var(--muted)}
+.money-history-summary strong{font-size:22px;overflow-wrap:anywhere;text-align:right}
+.money-history-list{min-height:0;overflow:auto;overscroll-behavior:contain;padding:0 5px}
+.money-history-day{padding-top:17px}
+.money-history-day h3{font-size:12px;color:var(--muted);font-weight:500}
+.money-history-day ul{list-style:none;margin:0;padding:0}
+.money-history-day li{display:flex;align-items:center;gap:14px;padding:13px 0;border-bottom:1px solid var(--line)}
+.money-history-day li>div{flex:1;min-width:0}
+.money-history-day li strong{display:block;font-size:14px;font-weight:600;overflow-wrap:anywhere}
+.money-history-day li small{display:block;font-size:11px;margin-top:3px}
+.money-history-day li>span{max-width:48%;font-size:14px;font-weight:650;overflow-wrap:anywhere;text-align:right}
+.money-history-empty{padding:32px 0;text-align:center;font-size:13px;color:var(--muted)}
+.money-history-dialog .modal-actions{margin-top:18px;flex-shrink:0}
+@media(max-width:600px){.detail-view .memo-card + .weekly-goals-card{margin-top:16px}.money-history-dialog{padding:20px}.money-history-dialog h2{font-size:19px}.money-history-summary strong{font-size:20px}}
