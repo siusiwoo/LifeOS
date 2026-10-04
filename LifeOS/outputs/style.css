@@ -248,3 +248,8 @@ html,body{overflow-x:hidden}
   .topline{position:relative;align-items:center;min-height:40px}
   .topline .mobile-menu-button{position:static;top:auto;right:auto;margin-left:auto;flex:0 0 42px}
 }
+
+@media(max-width:800px){
+  .topline .mobile-menu-button{width:42px;height:42px;padding:0;display:flex;align-items:center;justify-content:center;line-height:1;position:relative}
+  .topline .mobile-menu-button::before{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);margin:0;line-height:1}
+}
