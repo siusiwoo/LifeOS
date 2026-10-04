@@ -235,3 +235,11 @@ html,body{overflow-x:hidden}
   .note-view-images .note-image-thumb{width:100%;height:auto;min-height:120px;max-height:70dvh}
   .note-view-images .note-image-thumb img{max-height:70dvh}
 }
+
+.mobile-menu-button{display:none}
+@media(max-width:800px){
+  .mobile-menu-button{display:grid;place-items:center;position:fixed;top:14px;right:16px;width:42px;height:38px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);font-size:0;z-index:90;box-shadow:0 3px 12px #17231d14}
+  .mobile-menu-button::before{content:'☰';font-size:20px;line-height:1}
+  .mobile-menu-button[aria-expanded="true"]{background:var(--green);color:#fff}
+  .main{padding-top:64px}
+}
