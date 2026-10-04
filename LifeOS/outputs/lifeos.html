@@ -261,9 +261,7 @@ const openNoteViewBeforeImages=openNoteView;
 openNoteView=function(id){
   const note=Repository.getDay(state.date).notes.find(item=>item.id===id);if(!note)return openNoteViewBeforeImages(id);
   noteViewDialog.innerHTML=`<div class="modal-head"><h2>${esc(note.title)}</h2><button type="button" class="icon-btn" data-note-close aria-label="메모 닫기">✕</button></div><p class="note-view-date">${esc(note.createdAt||state.date)}</p><div class="note-view-body">${esc(note.body||'내용 없음')}</div>${noteImageMarkup(noteImages(note),'note-view-images')}<div class="modal-actions"><button type="button" class="outline" data-note-close>닫기</button><button type="button" class="primary" data-note-edit="${esc(note.id)}">수정</button></div>`;
-  noteViewDialog.showModal();
-};
-const recordSubmitBeforeNoteImages=$('#record-form').onsubmit;
+  noteViewDialog.querySelectorAll('[data-note-close]').forEach(button=>button.addEventListener('click',()=>{if(noteViewDialog.open)noteViewDialog.close()}));noteViewDialog.showModal();};const recordSubmitBeforeNoteImages=$('#record-form').onsubmit;
 $('#record-form').onsubmit=function(event){
   const edit=state.editing,isNote=edit?.kind==='note',images=isNote?(edit.noteImages||[]).slice():null,title=isNote?String(new FormData(event.target).get('title')||'').trim():'';
   const finish=(savedImages)=>{if(isNote)edit.noteImages=savedImages;const result=recordSubmitBeforeNoteImages.call(this,event);if(isNote&&title){const records=Repository.getDay(edit.date).notes||[];const saved=edit.id?records.find(item=>item.id===edit.id):[...records].reverse().find(item=>item.title===title&&item.createdAt===edit.date);if(saved){saved.images=savedImages;Repository.save();queueRemoteSync(edit.date);render()}}return result};
@@ -310,6 +308,7 @@ render();
 })();
 </script></body>
 </html>
+
 
 
 
