@@ -294,3 +294,28 @@ html,body{overflow-x:hidden}
 
 .google-auth-button .google-mark,.google-auth-button .google-mark *{stroke:none!important;stroke-width:0!important}
 
+
+/* Account profile menu */
+.profile.profile-authenticated{position:relative;display:block;border-top:1px solid #dce2d5;padding-top:16px}
+.account-trigger{width:100%;display:flex;align-items:center;gap:10px;text-align:left;padding:8px 7px;border-radius:12px}
+.account-trigger:hover{background:#e2e3e1}
+.account-trigger .avatar,.profile-dropdown-head .avatar{flex:0 0 35px}
+.avatar-image{width:35px;height:35px;border-radius:50%;object-fit:cover;background:#e4e4e1;display:block}
+.avatar-human{width:35px;height:35px;padding:7px;border-radius:50%;background:#e4e4e1;color:#616764;display:block;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.account-copy{min-width:0;display:grid;gap:1px;flex:1}
+.account-copy strong,.profile-dropdown-head strong{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.account-copy small,.profile-dropdown-head small{display:block;font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.account-chevron{font-size:15px;color:var(--muted);transform:translateY(2px)}
+.profile-dropdown{position:absolute;left:0;bottom:calc(100% + 12px);width:270px;padding:10px;border:1px solid #d8dad8;border-radius:17px;background:rgba(255,255,255,.82);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);box-shadow:0 18px 45px #17231d25;z-index:30}
+.profile-dropdown-head{display:flex;align-items:center;gap:10px;padding:6px 7px 11px}
+.profile-dropdown-head>div{min-width:0;display:grid;gap:1px}
+.profile-dropdown-divider{height:1px;background:#dfe1df;margin:0 7px 6px}
+.profile-menu-item{width:100%;display:flex;align-items:center;gap:12px;padding:10px 9px;border-radius:9px;text-align:left;font-size:13px;color:var(--ink)}
+.profile-menu-item:hover{background:rgba(232,233,231,.85)}
+.profile-menu-item span{width:19px;text-align:center;color:#626966;font-size:16px}
+.profile-menu-danger{color:#a25e51}
+.profile-menu-danger span{color:#a25e51}
+#profile-dialog{width:450px}
+.profile-edit-preview{display:grid;place-items:center;margin:2px 0 20px}
+.profile-edit-preview .avatar-image,.profile-edit-preview .avatar-human{width:64px;height:64px}
+@media(max-width:800px){.profile-dropdown{position:fixed;left:18px;bottom:82px;width:min(270px,calc(100vw - 36px))}}

@@ -61,30 +61,43 @@ const signupDialog = document.createElement('dialog');
 signupDialog.id = 'signup-dialog';
 signupDialog.innerHTML = `<form id="signup-form"><div class="modal-head"><h2>회원가입</h2><button type="button" id="close-signup" aria-label="닫기">✕</button></div><p class="muted" style="font-size:12px;margin-bottom:17px">이메일과 비밀번호로 LifeOS 계정을 만들어 보세요.</p><div class="form-grid"><label>이메일<input name="email" type="email" autocomplete="email" required placeholder="you@example.com"></label><label>비밀번호<input name="password" type="password" autocomplete="new-password" minlength="6" required placeholder="6자 이상"></label><label>비밀번호 확인<input name="passwordConfirm" type="password" autocomplete="new-password" minlength="6" required placeholder="비밀번호를 한 번 더 입력"></label></div><div class="modal-actions"><button type="button" class="outline" id="cancel-signup">취소</button><button type="submit" class="primary">가입하기</button></div></form>`;
 document.body.append(signupDialog);
+const profileDialog = document.createElement('dialog');
+profileDialog.id = 'profile-dialog';
+profileDialog.innerHTML = `<form id="profile-form"><div class="modal-head"><h2>프로필</h2><button type="button" id="close-profile" aria-label="닫기">✕</button></div><p class="muted" style="font-size:12px;margin-bottom:17px">계정 이름과 프로필 사진을 바꿀 수 있어요.</p><div class="profile-edit-preview" id="profile-edit-preview"></div><div class="form-grid"><label>표시 이름<input name="displayName" maxlength="30" placeholder="내 이름"></label><label>프로필 사진 주소<input name="avatarUrl" type="url" placeholder="https://... (선택) "></label></div><div class="modal-actions"><button type="button" class="outline" id="cancel-profile">취소</button><button type="submit" class="primary">저장</button></div></form>`;
+document.body.append(profileDialog);
 function openEmailAuth(){if(!window.lifeosSupabase){alert('Supabase 설정을 먼저 확인해 주세요.');return}authDialog.showModal()}
 function openSignup(){authDialog.close();signupDialog.showModal()}
+const humanAvatarMarkup = '<svg class="avatar-human" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="3.2"></circle><path d="M5.5 20c.7-3.6 2.8-5.5 6.5-5.5s5.8 1.9 6.5 5.5"></path></svg>';
+const avatarMarkup = user => { const url=user?.user_metadata?.avatar_url || user?.user_metadata?.picture; return url ? `<img class="avatar-image" src="${escapeAccountText(url)}" alt="프로필 사진" onerror="this.style.display='none'">` : humanAvatarMarkup; };
 function renderAccount(user) {
   window.lifeosCurrentUser = user || null;
   if (!accountArea) return;
   if (!user) {
+    accountArea.classList.remove('profile-authenticated');
     accountArea.innerHTML = '<div class="avatar">나</div><div><button class="account-action" id="login-email"><strong style="font-size:12px">이메일로 로그인</strong><small>계정으로 시작하기</small></button></div>';
-    document.querySelector('#login-email').onclick = openEmailAuth;
+    accountArea.onclick = openEmailAuth;
     return;
   }
+  accountArea.classList.add('profile-authenticated');
   const name = user.user_metadata?.display_name || user.email || '로그인 사용자';
-  accountArea.innerHTML = `<div class="avatar">나</div><div><button class="account-action" id="logout-email"><strong style="font-size:12px">${escapeAccountText(name)}</strong><small>로그아웃</small></button></div>`;
-  document.querySelector('#logout-email').onclick = async () => { await window.lifeosSupabase.auth.signOut(); };
+  accountArea.innerHTML = `<button type="button" class="account-trigger" id="account-trigger" aria-expanded="false">${avatarMarkup(user)}<span class="account-copy"><strong>${escapeAccountText(name)}</strong><small>${escapeAccountText(user.email || '')}</small></span><span class="account-chevron">⌃</span></button><div class="profile-dropdown" id="profile-dropdown" hidden><div class="profile-dropdown-head">${avatarMarkup(user)}<div><strong>${escapeAccountText(name)}</strong><small>${escapeAccountText(user.email || '')}</small></div></div><div class="profile-dropdown-divider"></div><button type="button" class="profile-menu-item" data-profile-open><span>◉</span>프로필</button><button type="button" class="profile-menu-item" data-settings-open><span>⚙</span>설정</button><button type="button" class="profile-menu-item profile-menu-danger" data-profile-logout><span>↪</span>로그아웃</button></div>`;
+  const trigger=document.querySelector('#account-trigger'); const menu=document.querySelector('#profile-dropdown');
+  accountArea.onclick = async event => { if(event.target.closest('#account-trigger')){const open=menu.hidden;menu.hidden=!open;trigger.setAttribute('aria-expanded',String(open));return} if(event.target.closest('[data-profile-open]')){menu.hidden=true;profileDialog.showModal();const form=document.querySelector('#profile-form');form.displayName.value=user.user_metadata?.display_name||'';form.avatarUrl.value=user.user_metadata?.avatar_url||'';document.querySelector('#profile-edit-preview').innerHTML=avatarMarkup(user);return} if(event.target.closest('[data-settings-open]')){menu.hidden=true;state.view='settings';render();return} if(event.target.closest('[data-profile-logout]')){menu.hidden=true;await window.lifeosSupabase.auth.signOut();} };
 }
 document.querySelector('#close-auth').onclick = () => authDialog.close();
 document.querySelector('#login-google').onclick = async () => {
   if (!window.lifeosSupabase) { alert('Supabase 설정을 먼저 확인해 주세요.'); return; }
-  const { error } = await window.lifeosSupabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin + window.location.pathname } });
+  const redirectOrigin = ['localhost', '127.0.0.1'].includes(window.location.hostname) ? 'http://127.0.0.1:8776' : window.location.origin;
+  const { error } = await window.lifeosSupabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirectOrigin + window.location.pathname } });
   if (error) alert(`Google 로그인에 실패했습니다: ${error.message}`);
 };
 document.querySelector('#auth-form').onsubmit = async event => { event.preventDefault(); const values=Object.fromEntries(new FormData(event.target)); const {error}=await window.lifeosSupabase.auth.signInWithPassword({email:values.email,password:values.password}); if(error) alert(`로그인에 실패했습니다: ${error.message}`); else authDialog.close(); };
 document.querySelector('#signup-email').onclick = openSignup;
 document.querySelector('#close-signup').onclick = () => signupDialog.close();
 document.querySelector('#cancel-signup').onclick = () => signupDialog.close();
+document.querySelector('#close-profile').onclick = () => profileDialog.close();
+document.querySelector('#cancel-profile').onclick = () => profileDialog.close();
+document.querySelector('#profile-form').onsubmit = async event => { event.preventDefault(); const user=window.lifeosCurrentUser; if(!user||!window.lifeosSupabase)return; const values=Object.fromEntries(new FormData(event.target)); const {data,error}=await window.lifeosSupabase.auth.updateUser({data:{display_name:values.displayName.trim(),avatar_url:values.avatarUrl.trim()}}); if(error){alert(`프로필 저장에 실패했습니다: ${error.message}`);return} profileDialog.close();renderAccount(data.user||user); };
 document.querySelector('#signup-form').onsubmit = async event => { event.preventDefault(); const values=Object.fromEntries(new FormData(event.target)); if(values.password!==values.passwordConfirm){alert('비밀번호가 서로 다릅니다.');return} const {error}=await window.lifeosSupabase.auth.signUp({email:values.email,password:values.password}); if(error) alert(`회원가입에 실패했습니다: ${error.message}`); else {signupDialog.close();alert('가입이 완료되었습니다. 이메일 인증이 필요하면 받은 메일을 확인해 주세요.');} };if (window.lifeosSupabase) {
   window.lifeosSupabase.auth.getSession().then(({ data }) => { renderAccount(data.session?.user); window.dispatchEvent(new CustomEvent('lifeos-auth', { detail: data.session?.user || null })); });
   window.lifeosSupabase.auth.onAuthStateChange((_event, session) => { renderAccount(session?.user); window.dispatchEvent(new CustomEvent('lifeos-auth', { detail: session?.user || null })); });
@@ -356,6 +369,10 @@ render();
 })();
 </script></body>
 </html>
+
+
+
+
 
 
 
