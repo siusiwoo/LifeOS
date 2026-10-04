@@ -285,3 +285,12 @@ html,body{overflow-x:hidden}
 .money-history-empty{padding:32px 0;text-align:center;font-size:13px;color:var(--muted)}
 .money-history-dialog .modal-actions{margin-top:18px;flex-shrink:0}
 @media(max-width:600px){.detail-view .memo-card + .weekly-goals-card{margin-top:16px}.money-history-dialog{padding:20px}.money-history-dialog h2{font-size:19px}.money-history-summary strong{font-size:20px}}
+
+/* Google sign-in button: match the supplied Google account button design. */
+.google-auth-button{width:100%;height:60px;border:1px solid #dadce0;border-radius:6px;padding:0 18px;background:#fff;display:flex;justify-content:center;align-items:center;gap:14px;font-size:20px;font-weight:400;color:#202124;margin-top:16px;line-height:1}
+.google-auth-button:hover{background:#fff;border-color:#c4c7c5}
+.google-auth-button:active{background:#f8f9fa}
+.google-auth-button .google-mark{display:block;width:28px;height:28px;min-width:28px;flex:0 0 28px}
+
+.google-auth-button .google-mark,.google-auth-button .google-mark *{stroke:none!important;stroke-width:0!important}
+
