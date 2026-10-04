@@ -323,3 +323,5 @@ html,body{overflow-x:hidden}
 #profile-form input[type="file"]{padding:8px;background:var(--paper)}
 
 .ranking-person{display:flex;align-items:center;gap:10px;min-width:0}.ranking-person>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ranking-avatar,.ranking-person .avatar-human{width:30px;height:30px;border-radius:50%;flex:0 0 30px}.ranking-avatar{object-fit:cover;border:1px solid var(--line)}.ranking-person .avatar-human{padding:5px;background:var(--soft);stroke:var(--muted);fill:none;stroke-width:1.6}
+
+.settings-name-field{display:grid;gap:6px;width:100%}.settings-name-field>label{font-size:12px}.settings-name-controls{display:flex;align-items:center;gap:10px}.settings-name-controls input{flex:1;min-width:0}.settings-name-controls button{white-space:nowrap}
