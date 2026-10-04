@@ -319,3 +319,5 @@ html,body{overflow-x:hidden}
 .profile-edit-preview{display:grid;place-items:center;margin:2px 0 20px}
 .profile-edit-preview .avatar-image,.profile-edit-preview .avatar-human{width:64px;height:64px}
 @media(max-width:800px){.profile-dropdown{position:fixed;left:18px;bottom:82px;width:min(270px,calc(100vw - 36px))}}
+.profile-file-help{display:block;color:var(--muted);font-size:11px;margin-top:-2px}
+#profile-form input[type="file"]{padding:8px;background:var(--paper)}
