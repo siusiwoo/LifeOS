@@ -341,3 +341,10 @@ html,body{overflow-x:hidden}
 .calendar-record-list{display:grid;gap:7px;margin-bottom:17px}.calendar-record-list>div,.calendar-entry{padding:9px 11px;border-radius:8px;background:var(--bg);font-size:12px}
 .calendar-entries,.calendar-notes{display:grid;gap:8px;margin-top:15px}.calendar-entry{display:flex;align-items:center;gap:9px}.calendar-note{display:flex;justify-content:space-between;gap:12px;padding:10px;border:1px solid var(--line);border-radius:8px;text-align:left;font-size:12px}.calendar-note small{white-space:nowrap}
 @media(max-width:850px){.calendar-view{grid-template-columns:1fr}}
+.record-markers{display:flex;align-items:center;justify-content:center;gap:9px;min-height:9px;line-height:1}
+.record-mark-dot{display:block;width:5px;height:5px;border-radius:50%;background:currentColor}
+.record-mark-star{display:block;font-size:10px;font-weight:700;line-height:1}
+.day .record-markers{color:#879987}.day.active .record-markers{color:#fff}
+.calendar-cell .record-markers{min-height:11px;color:#879987}.calendar-cell.active .record-markers{color:#fff}
+.calendar-legend{display:flex;gap:15px;flex-wrap:wrap;align-items:center;margin:0 0 12px;color:var(--muted);font-size:11px}
+.calendar-legend>span{display:inline-flex;align-items:center;gap:5px}
