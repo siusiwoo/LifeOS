@@ -45,7 +45,7 @@
 <dialog id="record-dialog" aria-labelledby="dialog-title"><form id="record-form"><div class="modal-head"><h2 id="dialog-title">기록 추가</h2><button type="button" id="close-dialog" aria-label="닫기">✕</button></div><p id="dialog-date" class="muted" style="font-size:12px;margin-bottom:17px"></p><div class="form-grid"><label id="kind-label">영역<select name="kind" id="record-kind"><option value="work">Work · 업무</option><option value="expense">Money · 소비</option><option value="income">Money · 수입</option><option value="reflection">회고 · 오늘의 한 줄</option></select></label><div id="dynamic-fields" class="form-grid"></div></div><div class="modal-actions"><button type="button" class="outline" id="cancel-dialog">취소</button><button type="submit" class="primary">저장하기</button></div></form></dialog><div id="toast" class="toast" role="status" hidden></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="/api/supabase-config"></script>
-<script src="/motivation.js?v=20261005-markers"></script>
+<script src="/motivation.js?v=20261006-taskmarkers"></script>
 <script>
 window.lifeosSupabase = null;
 if (window.supabase && window.LIFEOS_SUPABASE_CONFIG && window.LIFEOS_SUPABASE_CONFIG.url && window.LIFEOS_SUPABASE_CONFIG.key) {
@@ -158,9 +158,7 @@ function hasData(date){const d=Repository.getDay(date);return d.work.length||d.g
 function dateMarkers(date){
   const day=Repository.getDay(date);
   const recurring=day.work.some(record=>record.recurrenceType==='recurring');
-  const oneTime=day.work.some(record=>record.recurrenceType!=='recurring') ||
-    day.growth.length>0 || day.expenses.length>0 || day.income.length>0 ||
-    day.assets.length>0 || day.notes.length>0 || Boolean(day.reflection);
+  const oneTime=day.work.some(record=>record.recurrenceType!=='recurring');
   return `<span class="record-markers" aria-hidden="true">${oneTime?'<span class="record-mark-star">★</span>':''}${recurring?'<b class="record-mark-dot"></b>':''}</span>`;
 }
 function renderDate(){const d=parseDate(state.date);$('#month-title').textContent=`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}`;$('#date-picker').value=state.date;$('#selected-label').textContent=`${d.toLocaleDateString('ko-KR',{month:'long',day:'numeric',weekday:'long'})}의 기록${state.date===today?' · 오늘':''}`;const start=shift(state.date,-((d.getDay()+6)%7));$('#week').innerHTML=Array.from({length:7},(_,i)=>{const k=shift(start,i),date=parseDate(k);return `<button class="day ${k===state.date?'active':''}" data-date="${k}" aria-label="${date.toLocaleDateString('ko-KR')} ${hasData(k)?'기록 있음':'기록 없음'}" aria-pressed="${k===state.date}" ${validDate(k)?'':'disabled'}><span class="weekday">${['월','화','수','목','금','토','일'][i]}</span><span class="number">${date.getDate()}</span>${dateMarkers(k)}</button>`}).join('');$('#prev-week').disabled=!validDate(shift(state.date,-7));$('#next-week').disabled=!validDate(shift(state.date,7));}
