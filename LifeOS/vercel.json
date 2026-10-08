@@ -12,6 +12,18 @@
     {
       "source": "/motivation.js",
       "destination": "/outputs/motivation.js"
+    },
+    {
+      "source": "/fixed-money.js",
+      "destination": "/outputs/fixed-money.js"
+    },
+    {
+      "source": "/calendar-extras.js",
+      "destination": "/outputs/calendar-extras.js"
+    },
+    {
+      "source": "/calendar-extras.css",
+      "destination": "/outputs/calendar-extras.css"
     }
   ],
   "outputDirectory": "."

@@ -348,3 +348,14 @@ html,body{overflow-x:hidden}
 .calendar-cell .record-markers{min-height:11px;color:#879987}.calendar-cell.active .record-markers{color:#fff}
 .calendar-legend{display:flex;gap:15px;flex-wrap:wrap;align-items:center;margin:0 0 12px;color:var(--muted);font-size:11px}
 .calendar-legend>span{display:inline-flex;align-items:center;gap:5px}
+.fixed-money-card{margin-top:20px}
+.fixed-money-card .card-head{align-items:flex-start}.fixed-money-card .card-head p{font-size:12px;margin-top:5px}
+.fixed-money-add{display:flex;flex-wrap:wrap;gap:9px;margin:4px 0 16px}
+.fixed-money-rules{display:grid;gap:8px}
+.fixed-money-row{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:15px;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:var(--paper)}
+.fixed-money-row strong,.fixed-money-row small{display:block}.fixed-money-row strong{font-size:13px;overflow-wrap:anywhere}.fixed-money-row small{margin-top:2px;font-size:11px}
+.fixed-money-row>span{white-space:nowrap;font-weight:650}.fixed-money-actions{display:flex;gap:9px;white-space:nowrap}
+.fixed-money-dialog .fixed-money-help,.fixed-money-dialog .fixed-money-hint{font-size:12px;line-height:1.6;margin:0 0 16px}.fixed-money-dialog .fixed-money-hint{margin:14px 0 0}
+@media(max-width:600px){.fixed-money-row{grid-template-columns:1fr auto}.fixed-money-actions{grid-column:1/-1;justify-content:flex-end}}
+.fixed-money-category[hidden]{display:none!important}
+.fixed-money-schedule{margin-top:20px}.fixed-money-schedule .card-head{align-items:flex-start}.fixed-money-schedule .card-head p{font-size:12px;margin-top:5px}.fixed-money-month{display:flex;align-items:center;gap:7px;white-space:nowrap}.fixed-money-month strong{font-size:13px;min-width:62px;text-align:center}.fixed-money-projection{font-size:12px;color:var(--muted);padding:10px 12px;background:#f7f8f3;border-radius:9px;margin-bottom:10px}.fixed-money-plans{display:grid;gap:7px;max-height:390px;overflow:auto}.fixed-money-plan{display:grid;grid-template-columns:42px minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:10px 11px;border:1px solid var(--line);border-radius:9px}.fixed-money-plan time{font-size:11px;color:var(--muted)}.fixed-money-plan strong,.fixed-money-plan small{display:block}.fixed-money-plan strong{font-size:12px}.fixed-money-plan small{font-size:10px}.fixed-money-plan>span{font-size:12px;font-weight:650;white-space:nowrap}.fixed-money-plan .outline{font-size:11px;white-space:nowrap}.fixed-money-pending{font-size:10px!important;font-weight:400!important;color:var(--muted)}@media(max-width:600px){.fixed-money-plan{grid-template-columns:40px minmax(0,1fr) auto}.fixed-money-plan>button,.fixed-money-pending{grid-column:2/-1;justify-self:end}.fixed-money-schedule .card-head{flex-wrap:wrap}}

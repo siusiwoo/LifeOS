@@ -157,7 +157,7 @@ function calendarView() {
     const recorded = hasData(key);
     cells.push(`<button type="button" class="calendar-cell ${key === state.date ? 'active' : ''} ${recorded ? 'has-record' : ''}" data-date="${key}" aria-label="${key} 기록 보기"><span>${dayNumber}</span>${dateMarkers(key)}</button>`);
   }
-  const day = Repository.getDay(state.date);
+  const day = typeof dayWithFixedMoney==='function'?dayWithFixedMoney(state.date):Repository.getDay(state.date);
   const done = day.work.filter(item => item.done).length;
   const minutes = day.growth.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
   const expense = day.expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
