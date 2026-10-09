@@ -24,6 +24,14 @@
     {
       "source": "/calendar-extras.css",
       "destination": "/outputs/calendar-extras.css"
+    },
+    {
+      "source": "/memo-organizer.js",
+      "destination": "/outputs/memo-organizer.js"
+    },
+    {
+      "source": "/memo-organizer.css",
+      "destination": "/outputs/memo-organizer.css"
     }
   ],
   "outputDirectory": "."
