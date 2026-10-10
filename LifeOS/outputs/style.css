@@ -369,3 +369,5 @@ html,body{overflow-x:hidden}
 .settings-feature-item strong{display:block;font-size:13px;margin-bottom:7px}
 .settings-feature-item p{font-size:12px;line-height:1.7;color:var(--muted);word-break:keep-all;overflow-wrap:anywhere}
 @media(max-width:600px){.settings-feature-grid{grid-template-columns:1fr}.settings-feature-item{padding:15px}.settings-feature-intro{font-size:12px}}
+
+.feature-guide-login{grid-column:1/-1}
