@@ -9,7 +9,7 @@
 .memo-organizer-item:has(input:checked){border-color:#a7bd91;background:#f2f6ec}
 .memo-organizer-item input{margin:4px 0 0;accent-color:var(--green);flex:none}
 .memo-organizer-item-text{min-width:0;display:grid;gap:2px}
-.memo-organizer-item-text strong{font-size:13px;overflow-wrap:anywhere}
+.memo-organizer-item-heading{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.memo-organizer-item-text strong{font-size:13px;overflow-wrap:anywhere}
 .memo-organizer-item-text small{font-size:11px;overflow-wrap:anywhere}
 .memo-organizer-empty{padding:25px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:11px}
 .memo-organizer-status{min-height:20px;margin-top:10px;font-size:12px;color:var(--muted)}

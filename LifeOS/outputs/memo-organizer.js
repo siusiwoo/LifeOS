@@ -35,7 +35,7 @@
       ? sources.map(({ date, note }, index) => {
           const title = String(note.title || '').trim() || '제목 없는 메모';
           const preview = String(note.body || '').trim().replace(/\s+/g, ' ').slice(0, 110);
-          return `<label class="memo-organizer-item"><input type="checkbox" data-memo-index="${index}"><span class="memo-organizer-item-text"><strong>${safe(title)}</strong><small>${safe(date)}${preview ? ` · ${safe(preview)}` : ''}</small></span></label>`;
+          return `<label class="memo-organizer-item"><input type="checkbox" data-memo-index="${index}"><span class="memo-organizer-item-text"><span class="memo-organizer-item-heading"><strong>${safe(title)}</strong>${Array.isArray(note.images) && note.images.some(src => typeof src === 'string' && /^(data:image\/|https?:\/\/)/.test(src)) ? '<span class="memo-photo-badge">사진 첨부</span>' : ''}</span><small>${safe(date)}${preview ? ` · ${safe(preview)}` : ''}</small></span></label>`;
         }).join('')
       : '<p class="memo-organizer-empty">정리할 메모가 없습니다.</p>';
 
