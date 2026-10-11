@@ -27,15 +27,12 @@
 .calendar-money-row:last-child{border-bottom:0}
 .calendar-money-row strong{flex:1;min-width:0;overflow-wrap:anywhere;font-size:11px}
 .calendar-money-row>span:last-child{white-space:nowrap;font-weight:650}
-.calendar-cell .calendar-extra-marks{display:flex;justify-content:center;align-items:center;gap:5px;height:8px}
-.calendar-cell .calendar-extra-marks i,.calendar-cell.has-record .calendar-extra-marks i{display:block;width:5px;height:5px;border-radius:50%}
-.calendar-cell .calendar-event-mark,.calendar-cell.has-record .calendar-event-mark{background:#70a479}
-.calendar-cell .calendar-money-mark,.calendar-cell.has-record .calendar-money-mark{background:#d49a54}
-.calendar-cell .calendar-extra-marks .calendar-event-mark{width:6px;height:6px;border-radius:1px;transform:rotate(45deg)}
-.calendar-cell .calendar-extra-marks .calendar-money-mark{width:7px;height:7px;border-radius:0;clip-path:polygon(50% 0,0 100%,100% 100%)}
-.calendar-cell.active .calendar-extra-marks i{background:#fff}
-.calendar-legend-mark{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle}
-.calendar-legend .calendar-event-mark{background:#70a479;border-radius:1px;transform:rotate(45deg)}.calendar-legend .calendar-money-mark{background:#d49a54;border-radius:0;clip-path:polygon(50% 0,0 100%,100% 100%)}
+.calendar-cell .calendar-extra-marks{display:flex;justify-content:center;align-items:center;gap:5px;height:12px;line-height:1}
+.calendar-extra-marks .calendar-event-glyph,.calendar-extra-marks .calendar-money-glyph{display:inline-block;width:10px;font-size:10px;line-height:1;background:none}
+.calendar-event-glyph{color:#70a479}
+.calendar-money-glyph{color:#d49a54}
+.calendar-cell.active .calendar-extra-marks span{color:#fff}
+.calendar-legend-glyph{display:inline-block;width:10px;margin-right:4px;text-align:center;font-size:10px;line-height:1}
 .calendar-repeat-end[hidden]{display:none!important}
 .calendar-reminder-help{font-size:11px;margin-top:13px;line-height:1.5}
 @media(max-width:850px){.calendar-right-column{grid-column:1}}

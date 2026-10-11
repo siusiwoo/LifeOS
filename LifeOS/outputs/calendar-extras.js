@@ -110,12 +110,12 @@ const renderBeforeCalendarExtras=render;
 render=function(){
   renderBeforeCalendarExtras();
   if(state.view!=='calendar')return;
-  document.querySelector('.calendar-legend')?.insertAdjacentHTML('beforeend','<span><i class="calendar-event-mark calendar-legend-mark"></i> 일정·할 일</span><span><i class="calendar-money-mark calendar-legend-mark"></i> 예정 수입·소비</span>');
+  document.querySelector('.calendar-legend')?.insertAdjacentHTML('beforeend','<span><span class="calendar-event-glyph calendar-legend-glyph" aria-hidden="true">◆</span> 일정·할 일</span><span><span class="calendar-money-glyph calendar-legend-glyph" aria-hidden="true">▲</span> 예정 수입·소비</span>');
   document.querySelectorAll('.calendar-cell[data-date]').forEach(cell=>{
     const date=cell.dataset.date;
     const eventCount=calendarEventsForDay(date).length;
     const moneyCount=date>fixedMoneyToday()?fixedMoneyRules().filter(rule=>calendarNextFixedDate(rule)===date).length:0;
-    if(eventCount||moneyCount)cell.insertAdjacentHTML('beforeend',`<span class="calendar-extra-marks" aria-hidden="true">${eventCount?'<i class="calendar-event-mark"></i>':''}${moneyCount?'<i class="calendar-money-mark"></i>':''}</span>`);
+    if(eventCount||moneyCount)cell.insertAdjacentHTML('beforeend',`<span class="calendar-extra-marks" aria-hidden="true">${eventCount?'<span class="calendar-event-glyph">◆</span>':''}${moneyCount?'<span class="calendar-money-glyph">▲</span>':''}</span>`);
   });
 };
 async function calendarShare(id,date){

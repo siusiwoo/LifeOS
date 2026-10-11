@@ -355,6 +355,7 @@ html,body{overflow-x:hidden}
 .calendar-cell .record-markers{min-height:11px;color:#879987}.calendar-cell.active .record-markers{color:#fff}
 .calendar-legend{display:flex;gap:15px;flex-wrap:wrap;align-items:center;margin:0 0 12px;color:var(--muted);font-size:11px}
 .calendar-legend>span{display:inline-flex;align-items:center;gap:5px}
+.calendar-today-legend-mark{display:inline-block;width:12px;height:0;border-bottom:2px solid var(--ink)}
 .fixed-money-card{margin-top:20px}
 .fixed-money-card .card-head{align-items:flex-start}.fixed-money-card .card-head p{font-size:12px;margin-top:5px}
 .fixed-money-add{display:flex;flex-wrap:wrap;gap:9px;margin:4px 0 16px}
