@@ -5,7 +5,7 @@
 <title>LifeOS — 나의 하루를 연결하다</title>
 <meta name="description" content="업무, remind, 소비와 수입을 날짜별로 기록하는 LifeOS">
 <link rel="icon" type="image/png" sizes="192x192" href="./lifeos-leaf-icon.png?v=2"><link rel="shortcut icon" type="image/png" href="./lifeos-leaf-icon.png?v=2">
-<link rel="stylesheet" href="./style.css?v=20261012-today-line">
+<link rel="stylesheet" href="./style.css?v=20261013-money-category-filter">
 <link rel="stylesheet" href="./calendar-extras.css?v=20261011-shape-glyphs">
 <link rel="stylesheet" href="./memo-organizer.css?v=20261011-memo-photo">
 <style media="not all">
@@ -248,17 +248,33 @@ const moneyHistoryDialog=document.createElement('dialog');
 moneyHistoryDialog.className='money-history-dialog';
 moneyHistoryDialog.setAttribute('aria-labelledby','money-history-title');
 document.body.append(moneyHistoryDialog);
+function moneyHistoryCategory(record){return String(record.category||'기타').trim()||'기타'}
+function updateMoneyHistory(){
+  const kind=moneyHistoryDialog.dataset.kind,scope=moneyHistoryDialog.dataset.scope;
+  const excluded=new Set([...moneyHistoryDialog.querySelectorAll('[data-money-exclude]:checked')].map(input=>input.value));
+  const rows=moneyHistoryRecords(Repository.data.days,kind,scope,state.date)
+    .filter(({record})=>kind!=='expense'||!excluded.has(moneyHistoryCategory(record)));
+  const total=rows.reduce((sum,{record})=>sum+Number(record.amount||0),0);
+  const groups=new Map();
+  rows.forEach(({date,record})=>{if(!groups.has(date))groups.set(date,[]);groups.get(date).push(record)});
+  const history=[...groups].map(([date,records])=>`<section class="money-history-day"><h3><time datetime="${esc(date)}">${esc(parseDate(date).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}))}</time></h3><ul>${records.map(record=>`<li><div><strong>${esc(record.title)}</strong><small>${esc(kind==='expense'?moneyHistoryCategory(record):'수입')}</small></div><span>${won(Number(record.amount||0))}원</span></li>`).join('')}</ul></section>`).join('');
+  const label=kind==='expense'?'소비':'수입';
+  moneyHistoryDialog.querySelector('.money-history-summary').innerHTML=`<span>${rows.length}건의 ${label}${excluded.size?' · 제외 적용':''}</span><strong>${won(total)}원</strong>`;
+  moneyHistoryDialog.querySelector('.money-history-list').innerHTML=history||`<p class="money-history-empty">${excluded.size?'선택한 조건에 맞는 소비 내역이 없어요.':`이 기간에 기록된 ${label} 내역이 없어요.`}</p>`;
+}
 function openMoneyHistory(kind,scope){
   if(!['income','expense'].includes(kind)||!['all','month'].includes(scope))return;
   const label=kind==='income'?'수입':'소비',monthly=scope==='month';
   const rows=moneyHistoryRecords(Repository.data.days,kind,scope,state.date);
-  const total=rows.reduce((sum,{record})=>sum+Number(record.amount||0),0);
-  const groups=new Map();
-  rows.forEach(({date,record})=>{if(!groups.has(date))groups.set(date,[]);groups.get(date).push(record)});
-  const history=[...groups].map(([date,records])=>`<section class="money-history-day"><h3><time datetime="${esc(date)}">${esc(parseDate(date).toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric',weekday:'short'}))}</time></h3><ul>${records.map(record=>`<li><div><strong>${esc(record.title)}</strong><small>${esc(kind==='expense'?(record.category||'기타 소비'):'수입')}</small></div><span>${won(Number(record.amount||0))}원</span></li>`).join('')}</ul></section>`).join('');
-  moneyHistoryDialog.innerHTML=`<div class="modal-head"><h2 id="money-history-title">${monthly?'한달': '총'} ${label} 내역</h2><button type="button" class="icon-btn" data-money-history-close aria-label="내역 닫기">✕</button></div><p class="money-history-period">${monthly?`${state.date.slice(0,7).replace('-','.')} · 1일~말일`:'모든 날짜'} · 최신 날짜순</p><div class="money-history-summary"><span>${rows.length}건의 ${label}</span><strong>${won(total)}원</strong></div><div class="money-history-list" tabindex="0" role="region" aria-label="${label} 내역 목록">${history||`<p class="money-history-empty">이 기간에 기록된 ${label} 내역이 없어요.</p>`}</div><div class="modal-actions"><button type="button" class="outline" data-money-history-close>닫기</button></div>`;
+  const categories=kind==='expense'?[...new Set(rows.map(({record})=>moneyHistoryCategory(record)))].sort((a,b)=>a.localeCompare(b,'ko')):[];
+  const filters=categories.length?`<fieldset class="money-history-filters"><legend>목록에서 제외할 카테고리</legend><div class="money-history-filter-options">${categories.map(category=>`<label><input type="checkbox" data-money-exclude value="${esc(category)}"> ${esc(category)}</label>`).join('')}</div><small>체크한 카테고리는 이 내역과 합계에서만 빠져요.</small></fieldset>`:'';
+  moneyHistoryDialog.dataset.kind=kind;
+  moneyHistoryDialog.dataset.scope=scope;
+  moneyHistoryDialog.innerHTML=`<div class="modal-head"><h2 id="money-history-title">${monthly?'한달': '총'} ${label} 내역</h2><button type="button" class="icon-btn" data-money-history-close aria-label="내역 닫기">✕</button></div><p class="money-history-period">${monthly?`${state.date.slice(0,7).replace('-','.')} · 1일~말일`:'모든 날짜'} · 최신 날짜순</p>${filters}<div class="money-history-summary"></div><div class="money-history-list" tabindex="0" role="region" aria-label="${label} 내역 목록"></div><div class="modal-actions"><button type="button" class="outline" data-money-history-close>닫기</button></div>`;
+  updateMoneyHistory();
   moneyHistoryDialog.showModal();
 }
+moneyHistoryDialog.addEventListener('change',event=>{if(event.target.matches('[data-money-exclude]'))updateMoneyHistory()});
 document.addEventListener('click',event=>{
   const button=event.target.closest('[data-money-history]');
   if(button)openMoneyHistory(button.dataset.moneyHistory,button.dataset.moneyScope);

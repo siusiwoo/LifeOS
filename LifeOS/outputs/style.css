@@ -277,6 +277,7 @@ html,body{overflow-x:hidden}
 .money-history-dialog .modal-head{gap:12px;margin-bottom:6px;flex-shrink:0}
 .money-history-dialog .modal-head .icon-btn{flex-shrink:0;min-width:40px;min-height:40px}
 .money-history-period{font-size:12px;color:var(--muted);flex-shrink:0}
+.money-history-filters{border:1px solid var(--line);border-radius:12px;padding:10px 14px 12px;margin:16px 0 0}.money-history-filters legend{padding:0 4px;font-size:12px;font-weight:650}.money-history-filter-options{display:flex;flex-wrap:wrap;gap:8px;margin:3px 0 7px}.money-history-filter-options label{display:inline-flex;align-items:center;gap:5px;padding:5px 9px;border:1px solid var(--line);border-radius:8px;font-size:12px;cursor:pointer}.money-history-filter-options label:has(input:checked){background:#f0f3e9;border-color:#b5c4a7}.money-history-filter-options input{margin:0;accent-color:var(--green)}.money-history-filters small{font-size:11px}
 .money-history-summary{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:16px;margin:18px 0 8px;border-radius:12px;background:var(--bg);flex-shrink:0}
 .money-history-summary span{font-size:13px;color:var(--muted)}
 .money-history-summary strong{font-size:22px;overflow-wrap:anywhere;text-align:right}
