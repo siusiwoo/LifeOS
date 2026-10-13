@@ -380,3 +380,25 @@ html,body{overflow-x:hidden}
 @media(max-width:600px){.settings-feature-grid{grid-template-columns:1fr}.settings-feature-item{padding:15px}.settings-feature-intro{font-size:12px}}
 
 .feature-guide-login{grid-column:1/-1}
+
+/* Responsive polish: readable summaries and calmer calendar spacing. */
+@media (min-width:601px) and (max-width:1100px){
+  .stats,.detail-view .stats-money{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .stat{min-width:0}
+  .stat-value{overflow-wrap:anywhere}
+}
+@media (min-width:601px) and (max-width:850px){
+  .calendar-cell{aspect-ratio:auto;min-height:62px}
+}
+@media (max-width:600px){
+  .intro{flex-wrap:wrap;justify-content:flex-end;gap:12px;margin:24px 0 22px}
+  .intro>div:first-child{flex:1 1 100%;min-width:0}
+  .intro p{max-width:none;word-break:keep-all;overflow-wrap:anywhere}
+  .detail-view .stats-money{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .detail-view .stats-money .stat{min-width:0;padding:15px 14px}
+  .detail-view .stats-money .stat-value{font-size:clamp(20px,6vw,27px);overflow-wrap:anywhere}
+  .detail-view .stats-money .stat-value span{font-size:12px}
+}
+@media (max-width:600px){.detail-view .stats-money>.stat:last-child:nth-child(odd){grid-column:1/-1}}
+
+@media (max-width:360px){.intro h1{font-size:26px;word-break:keep-all}}
