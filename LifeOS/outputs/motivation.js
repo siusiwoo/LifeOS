@@ -22,7 +22,7 @@ function rememberGrowth() {
     }
   }
   for (const key of Object.keys(events)) {
-    if (key.startsWith('weekly:')) active.add(key);
+    if (key.startsWith('weekly:') || key.startsWith('long-goal:')) active.add(key);
   }
   for (const key of Object.keys(events)) {
     if (!active.has(key)) {
@@ -34,7 +34,7 @@ function rememberGrowth() {
 }
 function treeSummary(settings = {}) {
   const events = Object.values(settings.treeEvents || {});
-  const total = events.length;
+  const total = events.reduce((sum, event) => sum + (Number(event.points) || 1), 0);
   const completed = Math.floor(total / 100), progress = total % 100;
   const stages = [{name:'씨앗',at:0},{name:'새싹',at:10},{name:'어린 나무',at:30},{name:'튼튼한 나무',at:60},{name:'풍성해지는 나무',at:85}];
   const stage = stages.reduce((value,item,index)=>progress>=item.at?index:value,0);
@@ -46,6 +46,69 @@ function growthTree(stage) {
   return `<svg class="growth-tree" viewBox="0 0 200 155" role="img" aria-label="성장 나무 ${stage+1}단계"><ellipse cx="100" cy="140" rx="48" ry="6" class="tree-ground"/>${stage===0?'<ellipse cx="100" cy="129" rx="9" ry="12" class="tree-seed"/>':`<path d="M100 137 Q96 100 101 ${stage===1?83:stage===2?58:27}" class="tree-trunk"/>${leaves.slice(0,counts[stage]).map(([x,y,angle])=>`<path d="M100 ${y+20} L${x} ${y+5}" class="tree-branch"/><ellipse cx="${x}" cy="${y}" rx="10" ry="17" transform="rotate(${angle} ${x} ${y})" class="tree-leaf"/>`).join('')}`}</svg>`;
 }
 
+
+// Long-term goals live in motivation data, so they sync with the other Work goals.
+let longGoalEditingId = null;
+const longGoalReward = 10;
+function longGoals() {
+  const motivation = Repository.data.motivation ||= {};
+  return motivation.longGoals ||= [];
+}
+function syncLongGoalPoints() {
+  const motivation = Repository.data.motivation ||= {};
+  const events = motivation.treeEvents ||= {};
+  for (const key of Object.keys(events)) if (key.startsWith('long-goal:')) delete events[key];
+  for (const goal of longGoals()) {
+    if (!goal.done || !String(goal.title || '').trim()) continue;
+    events[`long-goal:${goal.id}`] = {kind:'long-goal',date:goal.completedAt || today,title:goal.title,points:longGoalReward};
+  }
+  Repository.save();
+  syncCategoriesToSupabase();
+}
+function longGoalsView() {
+  const goals = longGoals();
+  const editing = goals.find(goal => goal.id === longGoalEditingId);
+  const done = goals.filter(goal => goal.done).length;
+  const ordered = [...goals].sort((a,b) => Number(a.done) - Number(b.done));
+  return `<section class="card long-goals-card" id="work-long-goals"><div class="card-head"><div><h2>내가 이루고 싶은 목표</h2><p class="muted">시간을 들여 이루고 싶은 목표를 적어 보세요.</p></div><span class="pill">${done} / ${goals.length} 달성</span></div><form class="long-goal-form" data-long-goal-form><label>목표 이름<input name="title" maxlength="120" required value="${esc(editing?.title || '')}" placeholder="예: 자격증 취득하기"></label><label>목표 날짜 · 선택<input name="targetDate" type="date" value="${esc(editing?.targetDate || '')}"></label><button type="submit" class="primary">${editing?'수정 저장':'목표 추가'}</button>${editing?'<button type="button" class="outline" data-long-goal-cancel>취소</button>':''}</form><p class="long-goal-help">목표 달성 시 Tree 포인트 +${longGoalReward}점 · 완료를 취소하거나 삭제하면 점수도 취소돼요.</p><div class="long-goal-list">${ordered.length?ordered.map(goal=>`<div class="long-goal-row ${goal.done?'is-done':''}"><button type="button" class="check ${goal.done?'done':''}" data-long-goal-toggle="${esc(goal.id)}" aria-label="${esc(goal.title)} ${goal.done?'달성 취소':'목표 달성'}" aria-pressed="${!!goal.done}">${goal.done?'✓':''}</button><div class="long-goal-info"><strong>${esc(goal.title)}</strong><small>${goal.done?`${esc(goal.completedAt || '')} 달성 · +${longGoalReward}점`:goal.targetDate?`목표 날짜 ${esc(goal.targetDate)}`:'목표 날짜 미정'}</small></div><button type="button" class="edit" data-long-goal-edit="${esc(goal.id)}" aria-label="${esc(goal.title)} 수정">수정</button><button type="button" class="delete-inline" data-long-goal-remove="${esc(goal.id)}" aria-label="${esc(goal.title)} 삭제">×</button></div>`).join(''):'<p class="long-goal-empty">아직 정한 목표가 없어요. 이루고 싶은 큰 목표를 하나 적어 보세요.</p>'}</div></section>`;
+}
+document.addEventListener('submit', event => {
+  if (!event.target.matches('[data-long-goal-form]')) return;
+  event.preventDefault();
+  const data = new FormData(event.target);
+  const title = String(data.get('title') || '').trim();
+  const targetDate = String(data.get('targetDate') || '');
+  if (!title) { toast('목표 이름을 입력해 주세요.'); return; }
+  if (targetDate && !validDate(targetDate)) { toast('올바른 목표 날짜를 선택해 주세요.'); return; }
+  const goals = longGoals();
+  const existing = goals.find(goal => goal.id === longGoalEditingId);
+  if (existing) { existing.title = title; existing.targetDate = targetDate; }
+  else goals.push({id:`long-goal-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,title,targetDate,done:false,completedAt:''});
+  longGoalEditingId = null;
+  syncLongGoalPoints();render();toast(existing?'목표를 수정했어요.':'새 목표를 추가했어요.');
+});
+document.addEventListener('click', event => {
+  const button = event.target.closest('button');
+  if (!button) return;
+  if (button.hasAttribute('data-long-goal-cancel')) { longGoalEditingId = null;render();return; }
+  if (button.dataset.longGoalEdit) { longGoalEditingId = button.dataset.longGoalEdit;render();document.querySelector('[data-long-goal-form] input[name="title"]')?.focus();return; }
+  if (button.dataset.longGoalToggle) {
+    const goal = longGoals().find(item => item.id === button.dataset.longGoalToggle);
+    if (!goal) return;
+    goal.done = !goal.done;
+    goal.completedAt = goal.done ? today : '';
+    syncLongGoalPoints();render();toast(goal.done?`목표를 달성했어요. Tree 포인트 +${longGoalReward}점!`:'목표 달성을 취소했어요.');return;
+  }
+  if (button.dataset.longGoalRemove) {
+    if (!window.confirm('이 목표를 삭제할까요?')) return;
+    const goals = longGoals();
+    const index = goals.findIndex(item => item.id === button.dataset.longGoalRemove);
+    if (index < 0) return;
+    goals.splice(index,1);
+    if (longGoalEditingId === button.dataset.longGoalRemove) longGoalEditingId = null;
+    syncLongGoalPoints();render();toast('목표를 삭제했어요.');
+  }
+});
 
 function weeklyStart(date) {
   const value = parseDate(date);
@@ -66,7 +129,7 @@ function weeklyGoalsView() {
   const {key,goals} = weeklyGoals();
   const completed = goals.filter(goal=>goal.title.trim() && goal.done).length;
   const filled = goals.filter(goal=>goal.title.trim()).length;
-  return `<section class="card weekly-goals-card"><div class="card-head"><div><h2>이번 주 목표</h2><p class="muted">${key}부터 일요일까지 완수할 일을 적어 보세요.</p></div><span class="pill">${completed} / ${filled || goals.length} 완료</span></div><div class="weekly-goal-list">${goals.map((goal,index)=>`<div class="weekly-goal-row"><input type="checkbox" data-weekly-toggle="${esc(goal.id)}" ${goal.done?'checked':''} ${goal.title.trim()?'':'disabled'} aria-label="${index+1}번째 목표 완료"><input class="weekly-goal-input ${goal.done?'is-done':''}" data-weekly-title="${esc(goal.id)}" value="${esc(goal.title)}" maxlength="120" placeholder="${index+1}번째 목표를 입력하세요"><button type="button" class="delete-inline" data-weekly-remove="${esc(goal.id)}" aria-label="${index+1}번째 목표 삭제">×</button></div>`).join('')}</div><div class="weekly-goal-actions"><button type="button" class="text-btn" data-weekly-add>＋ 목표 추가</button><span>${filled && filled===completed ? '목표를 모두 완료했어요. Tree 포인트 5점을 얻었어요.' : '이번 주에 꼭 끝낼 일을 작은 단위로 적어 보세요.'}</span></div></section>`;
+  return `<section class="card weekly-goals-card" id="work-weekly-goals"><div class="card-head"><div><h2>이번 주 목표</h2><p class="muted">${key}부터 일요일까지 완수할 일을 적어 보세요.</p></div><span class="pill">${completed} / ${filled || goals.length} 완료</span></div><div class="weekly-goal-list">${goals.map((goal,index)=>`<div class="weekly-goal-row"><input type="checkbox" data-weekly-toggle="${esc(goal.id)}" ${goal.done?'checked':''} ${goal.title.trim()?'':'disabled'} aria-label="${index+1}번째 목표 완료"><input class="weekly-goal-input ${goal.done?'is-done':''}" data-weekly-title="${esc(goal.id)}" value="${esc(goal.title)}" maxlength="120" placeholder="${index+1}번째 목표를 입력하세요"><button type="button" class="delete-inline" data-weekly-remove="${esc(goal.id)}" aria-label="${index+1}번째 목표 삭제">×</button></div>`).join('')}</div><div class="weekly-goal-actions"><button type="button" class="text-btn" data-weekly-add>＋ 목표 추가</button><span>${filled && filled===completed ? '목표를 모두 완료했어요. Tree 포인트 5점을 얻었어요.' : '이번 주에 꼭 끝낼 일을 작은 단위로 적어 보세요.'}</span></div></section>`;
 }
 function addWeeklyGoalSlots() {
   const {goals}=weeklyGoals();
@@ -97,13 +160,13 @@ function treeView() {
     const pages = Math.max(1,Math.ceil(m.completed/24));
     treePage = Math.max(0,Math.min(treePage,pages-1));
     const first = treePage*24, count = Math.min(24,m.completed-first);
-    return `${tabs}<section class="card forest-card"><div class="card-head"><h2>내가 키운 숲</h2><span class="pill">완성한 나무 ${m.completed}그루</span></div><p class="muted">한 그루마다 작은 실천 100개가 담겨 있어요.</p>${m.completed?`<div class="forest-grid">${Array.from({length:count},(_,i)=>`<figure>${growthTree(4)}<figcaption>${first+i+1}번째 나무</figcaption></figure>`).join('')}</div>`:'<div class="empty">아직 완성한 나무가 없어요.<br>지금 키우는 첫 나무가 다 자라면 이곳에 심어져요.</div>'}${pages>1?`<div class="tree-pagination"><button class="outline" data-tree-page="${treePage-1}" ${treePage===0?'disabled':''}>이전</button><span>${treePage+1} / ${pages}</span><button class="outline" data-tree-page="${treePage+1}" ${treePage===pages-1?'disabled':''}>다음</button></div>`:''}</section>`;
+    return `${tabs}<section class="card forest-card"><div class="card-head"><h2>내가 키운 숲</h2><span class="pill">완성한 나무 ${m.completed}그루</span></div><p class="muted">한 그루마다 Tree 포인트 100점이 담겨 있어요.</p>${m.completed?`<div class="forest-grid">${Array.from({length:count},(_,i)=>`<figure>${growthTree(4)}<figcaption>${first+i+1}번째 나무</figcaption></figure>`).join('')}</div>`:'<div class="empty">아직 완성한 나무가 없어요.<br>지금 키우는 첫 나무가 다 자라면 이곳에 심어져요.</div>'}${pages>1?`<div class="tree-pagination"><button class="outline" data-tree-page="${treePage-1}" ${treePage===0?'disabled':''}>이전</button><span>${treePage+1} / ${pages}</span><button class="outline" data-tree-page="${treePage+1}" ${treePage===pages-1?'disabled':''}>다음</button></div>`:''}</section>`;
   }
-  const labels = {work:'해야 할 일을 완료했어요',expenses:'소비를 기록했어요',growth:'배움을 기록했어요',weekly:'이번 주 목표를 모두 완료했어요'};
+  const labels = {work:'해야 할 일을 완료했어요',expenses:'소비를 기록했어요',growth:'배움을 기록했어요',weekly:'이번 주 목표를 완료했어요','long-goal':'장기 목표를 달성했어요'};
   const recent = m.events.slice().sort((a,b)=>b.date.localeCompare(a.date));
-  const renderHistory = items => `<ul class="tree-history">${items.map(e=>`<li><div><strong>${labels[e.kind]||'실천을 기록했어요'}</strong><p>${esc(e.title)}</p></div><time>${esc(e.date)}</time><span class="pill">+1</span></li>`).join('')}</ul>`;
+  const renderHistory = items => `<ul class="tree-history">${items.map(e=>`<li><div><strong>${labels[e.kind]||'실천을 기록했어요'}</strong><p>${esc(e.title)}</p></div><time>${esc(e.date)}</time><span class="pill">+${Number(e.points)||1}</span></li>`).join('')}</ul>`;
   const history = recent.length ? `${renderHistory(recent.slice(0,5))}${recent.length>5?`<details class="tree-history-more"><summary>나머지 기록 ${recent.length-5}개 보기</summary>${renderHistory(recent.slice(5))}</details>`:''}` : '<p class="empty">업무를 완료하거나 소비·배움을 기록하면 나무가 자라요.</p>';
-  return `${tabs}<section class="card motivation-card tree-current"><div class="motivation-tree">${growthTree(m.stage)}<strong>${m.completed+1}번째 나무 · ${m.stages[m.stage].name}</strong><span>${m.completed?'새 씨앗도 천천히 키워봐요.':'작은 실천으로 첫 씨앗을 키워봐요.'}</span></div><div class="motivation-body"><div class="card-head"><h2>천천히 자라는 나의 나무</h2><span class="pill">누적 실천 ${m.total}개</span></div><p class="motivation-message">${next?`${next.name}까지 실천 ${next.at-m.progress}개 남았어요.`:`나무 완성까지 실천 ${100-m.progress}개 남았어요.`}</p><div class="weekly-numbers"><span>이 나무와 함께한 실천</span><strong>${m.progress} / 100</strong></div><div class="weekly-track" role="progressbar" aria-label="현재 나무 성장" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${m.progress}"><i style="width:${m.progress}%"></i></div><p class="motivation-help">업무 완료 · 소비 기록 · 배움 기록마다 한 걸음.<br>시간과 금액에 관계없이 각 기록은 한 번만 반영돼요.<br>실천 100개로 나무를 완성하면 새 씨앗이 시작돼요.<br>쉬는 날에도, 기록을 수정하거나 지워도 키운 나무는 남아요.</p></div></section><section class="card"><div class="card-head"><h2>나무를 키운 기록</h2></div>${history}</section>`;
+  return `${tabs}<section class="card motivation-card tree-current"><div class="motivation-tree">${growthTree(m.stage)}<strong>${m.completed+1}번째 나무 · ${m.stages[m.stage].name}</strong><span>${m.completed?'새 씨앗도 천천히 키워봐요.':'작은 실천으로 첫 씨앗을 키워봐요.'}</span></div><div class="motivation-body"><div class="card-head"><h2>천천히 자라는 나의 나무</h2><span class="pill">누적 Tree 포인트 ${m.total}점</span></div><p class="motivation-message">${next?`${next.name}까지 ${next.at-m.progress}점 남았어요.`:`나무 완성까지 ${100-m.progress}점 남았어요.`}</p><div class="weekly-numbers"><span>이 나무와 함께한 포인트</span><strong>${m.progress} / 100</strong></div><div class="weekly-track" role="progressbar" aria-label="현재 나무 성장" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${m.progress}"><i style="width:${m.progress}%"></i></div><p class="motivation-help">업무 완료 · 소비 기록 · 배움 기록은 1점씩.<br>주간 목표 완료는 1점, 모두 완료하면 보너스 5점.<br>장기 목표 달성은 10점이며, 완료를 취소하면 점수도 취소돼요.<br>포인트 100점으로 나무를 완성하면 새 씨앗이 시작돼요.</p></div></section><section class="card"><div class="card-head"><h2>나무를 키운 기록</h2></div>${history}</section>`;
 }
 document.addEventListener('click',event=>{
   const button=event.target.closest('button');

@@ -414,3 +414,73 @@ html,body{overflow-x:hidden}
   .sidebar .profile{margin-top:auto;padding-top:14px}
   .sidebar .profile-dropdown{position:fixed;left:18px;bottom:76px}
 }
+/* Keep the profile name field and Save button inside narrow Settings cards. */
+.settings-name-row .settings-name-field{min-width:0;max-width:100%;flex:1 1 0%}
+.settings-name-row .settings-name-controls{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;width:100%;min-width:0}
+.settings-name-row #settings-name{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+
+/* Work: personal long-term goals */
+.long-goals-card{margin:21px 0}
+.long-goals-card .card-head{align-items:flex-start}
+.long-goals-card .card-head h2{margin-bottom:3px}
+.long-goal-form{display:flex;align-items:end;flex-wrap:wrap;gap:9px}
+.long-goal-form label{display:grid;gap:5px;font-size:11px;color:var(--muted);min-width:0}
+.long-goal-form label:first-child{flex:1 1 230px}
+.long-goal-form label:nth-child(2){flex:0 1 180px}
+.long-goal-form input{width:100%;min-width:0;border:1px solid var(--line);border-radius:9px;padding:10px 12px;background:var(--paper);color:var(--ink)}
+.long-goal-form button{min-height:42px}
+.long-goal-help{color:var(--muted);font-size:11px;margin:10px 0 7px}
+.long-goal-list{margin-top:12px}
+.long-goal-row{display:flex;align-items:center;gap:11px;border-top:1px solid var(--line);padding:13px 0;min-width:0}
+.long-goal-info{flex:1;min-width:0;display:grid;gap:2px}
+.long-goal-info strong{font-size:13px;overflow-wrap:anywhere}
+.long-goal-info small{font-size:11px}
+.long-goal-row.is-done .long-goal-info strong{text-decoration:line-through;color:var(--muted)}
+.long-goal-empty{color:var(--muted);font-size:12px;padding:20px 0 5px}
+@media(max-width:600px){.long-goals-card{margin:16px 0}.long-goals-card .card-head{display:block}.long-goals-card .card-head .pill{display:inline-block;margin-top:8px}.long-goal-form label:first-child{flex-basis:100%}.long-goal-form label:nth-child(2){flex:1 1 135px}.long-goal-form button{padding:10px 13px}.long-goal-row{gap:8px}}
+
+
+/* The Work shortcuts belong in the page header. */
+.work-shortcut{display:none;position:relative;margin-left:auto;z-index:60}
+.work-view .work-shortcut{display:block}
+.work-shortcut-trigger{display:flex;align-items:center;gap:7px;padding:8px 12px;border:1px solid #d5ded2;border-radius:10px;background:var(--paper);font-size:12px;font-weight:650;white-space:nowrap}
+.work-shortcut-trigger[aria-expanded="true"]{background:#e7eee4;border-color:#9ab094}
+.work-shortcut-trigger span{font-size:16px;line-height:1}
+.work-shortcut-panel{position:absolute;top:calc(100% + 8px);right:0;width:260px;max-width:calc(100vw - 34px);padding:7px;background:var(--paper);border:1px solid var(--line);border-radius:14px;box-shadow:0 18px 45px #263d3529;display:grid;gap:2px}
+.work-shortcut-panel[hidden]{display:none}
+.work-shortcut-link{display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:10px 11px;border-radius:8px;font-size:12px}
+.work-shortcut-link:hover,.work-shortcut-link:focus-visible{background:#eff4ec}
+.work-shortcut-link small{color:var(--muted);white-space:nowrap;font-size:11px}
+#work-tasks,#work-notes,#work-long-goals,#work-weekly-goals{scroll-margin-top:16px}
+@media(max-width:800px){.work-view .topline{gap:8px}.work-view .topline .mobile-menu-button{margin-left:0}.work-view .demo{display:none}}
+@media(max-width:390px){.work-view .topline .crumb{gap:6px}.work-view .topline .crumb span:first-child,.work-view .topline .crumb span:nth-child(2){display:none}.work-shortcut-trigger{padding:8px 10px;font-size:11px}}
+
+@media(max-width:390px){.work-shortcut-panel{right:-50px;width:min(260px,calc(100vw - 34px))}}
+
+
+/* Reuse the compact top-bar shortcut menu on long pages. */
+.main.has-shortcuts .work-shortcut{display:block}
+@media(max-width:800px){
+  .main.has-shortcuts .topline{gap:8px}
+  .main.has-shortcuts .topline .mobile-menu-button{margin-left:0}
+  .main.has-shortcuts .demo{display:none}
+}
+@media(max-width:390px){
+  .main.has-shortcuts .topline .crumb{gap:6px}
+  .main.has-shortcuts .topline .crumb span:first-child,
+  .main.has-shortcuts .topline .crumb span:nth-child(2){display:none}
+}
+
+
+/* Stronger visual affordance without adding an arrow glyph. */
+.work-shortcut-trigger{min-height:40px;padding:9px 14px;background:var(--green);color:#fff;border:1px solid var(--green);border-radius:11px;box-shadow:0 4px 12px #263d3526;transition:background .16s,box-shadow .16s,transform .16s}
+.work-shortcut-trigger:hover{background:#3b6452;box-shadow:0 6px 15px #263d3533;transform:translateY(-1px)}
+.work-shortcut-trigger[aria-expanded="true"]{background:#1e3e32;color:#fff;border-color:#1e3e32;box-shadow:0 2px 6px #263d3529}
+.work-shortcut-trigger:active{transform:translateY(1px);box-shadow:0 1px 4px #263d3529}
+
+/* Keep all seven calendar dates inside the card on narrow phones. */
+@media(max-width:600px){
+  .calendar-weekdays,.calendar-grid{width:100%;min-width:0;gap:3px}
+  .calendar-cell{aspect-ratio:auto;min-width:0;width:100%;min-height:36px;padding:3px 0;box-sizing:border-box;font-size:12px}
+  .calendar-cell .record-markers{gap:3px}
+}
