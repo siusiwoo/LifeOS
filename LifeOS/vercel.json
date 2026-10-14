@@ -32,6 +32,10 @@
     {
       "source": "/memo-organizer.css",
       "destination": "/outputs/memo-organizer.css"
+    },
+    {
+      "source": "/page-shortcuts.js",
+      "destination": "/outputs/page-shortcuts.js"
     }
   ],
   "outputDirectory": "."
