@@ -430,7 +430,7 @@ render();
   try{applyTheme(localStorage.getItem(themeKey)||'gray')}catch(e){applyTheme('gray')}
   function nav(){return Object.entries(views).map(([id,v])=>`<button class="nav ${state.view===id?'active':''}" data-view="${id}" ${state.view===id?'aria-current="page"':''}>${svg(id)}${v.name}${state.view===id?'<span class="nav-dot"></span>':''}</button>`).join('')}
   function shell(config){$('.main').className='main detail-view';$('#add-record').hidden=true;$('#navigation').innerHTML=nav();$('#breadcrumb').textContent=config.name;$('#page-title').textContent=config.title;$('#page-description').textContent=config.description;$('#eyebrow').textContent=config.eyebrow;}
-  function settingsView(){const user=window.lifeosCurrentUser;const meta=user?.user_metadata||{};const current=meta.display_name||'';const visible=meta.ranking_visible===true;const theme=document.documentElement.dataset.theme||'gray';return `<section class="card settings-card"><div class="card-head"><h2>프로필 설정</h2></div><div class="settings-row settings-name-row"><div class="settings-name-field"><label for="settings-name">이름</label><div class="settings-name-controls"><input id="settings-name" value="${escapeAccountText(current)}" maxlength="30" placeholder="랭킹에 표시할 이름"><button class="primary" data-save-settings>저장</button></div></div></div><p class="muted settings-help">이름은 Tree Ranking에 표시됩니다.</p><div class="settings-row"><div><strong>랭킹에 프로필 사진 표시</strong><p class="muted">끄면 기본 프로필 사진으로 표시되고, 켜면 내 프로필 사진이 랭킹에 표시됩니다.</p></div><label class="switch"><input id="settings-ranking" type="checkbox" ${visible?'checked':''}><span></span></label></div><div class="settings-row"><div><strong>화면 설정</strong><p class="muted">앱의 기본 화면 색감을 선택합니다.</p></div><select id="settings-theme"><option value="gray" ${theme==='gray'?'selected':''}>Gray</option><option value="dark" ${theme==='dark'?'selected':''}>Dark</option></select></div><div class="settings-row"><div><strong>튜토리얼</strong><p class="muted">처음 보는 사용법 안내를 다시 확인합니다.</p></div><button class="outline" data-onboarding-replay>튜토리얼 다시보기</button></div><div class="settings-row"><div><strong>계정</strong><p class="muted">${escapeAccountText(user?.email||'로그인하지 않음')}</p></div><button class="outline" data-settings-logout ${user?'':'disabled'}>로그아웃</button></div></section>`}
+  function settingsView(){const user=window.lifeosCurrentUser;const meta=user?.user_metadata||{};const current=meta.display_name||'';const visible=meta.ranking_visible===true;const theme=document.documentElement.dataset.theme||'gray';return `<section class="card settings-card"><div class="card-head"><h2>프로필 설정</h2></div><div class="settings-row settings-name-row"><div class="settings-name-field"><label for="settings-name">이름</label><div class="settings-name-controls"><input id="settings-name" value="${escapeAccountText(current)}" maxlength="30" placeholder="랭킹에 표시할 이름"><button class="primary" data-save-settings>저장</button></div></div></div><p class="muted settings-help">이름은 Tree Ranking에 표시됩니다.</p><div class="settings-row"><div><strong>랭킹에 프로필 사진 표시</strong><p class="muted">끄면 기본 프로필 사진으로 표시되고, 켜면 내 프로필 사진이 랭킹에 표시됩니다.</p></div><label class="switch"><input id="settings-ranking" type="checkbox" ${visible?'checked':''}><span></span></label></div><div class="settings-row"><div><strong>화면 설정</strong><p class="muted">앱의 기본 화면 색감을 선택합니다.</p></div><select id="settings-theme"><option value="gray" ${theme==='gray'?'selected':''}>Gray</option><option value="dark" ${theme==='dark'?'selected':''}>Dark</option></select></div><div class="settings-row"><div><strong>튜토리얼</strong><p class="muted">처음 보는 사용법 안내를 다시 확인합니다.</p></div><button class="outline" data-onboarding-replay>튜토리얼 다시보기</button></div><div class="settings-row"><div><strong>계정</strong><p class="muted">${escapeAccountText(user?.email||'로그인하지 않음')}</p></div><div class="settings-account-actions"><button class="outline" data-settings-logout ${user?'':'disabled'}>로그아웃</button><button class="outline account-delete-trigger" data-account-delete ${user?'':'disabled'}>탈퇴</button></div></div></section>`}
     window.lifeosRankingNameTaken = async function(name,userId){ const normalized=String(name||'').trim(); if(!normalized||!window.lifeosSupabase)return false; const {data,error}=await window.lifeosSupabase.from('profiles').select('id').ilike('display_name',normalized).neq('id',userId).limit(1); if(error){console.warn('랭킹 이름 중복 확인 실패',error);return false} return Boolean(data?.length); };function rankingView(){return `<section class="card ranking-card"><div class="card-head"><h2>Tree Ranking</h2><span class="pill">누적 포인트</span></div><div id="ranking-list" class="empty"><p>랭킹을 불러오는 중입니다.</p></div></section>`}
   async function syncRankingProfile(){const user=window.lifeosCurrentUser;if(!remoteDataReady||!user||remoteUser?.id!==user.id||!window.lifeosSupabase)return false;const summary=treeSummary(Repository.data.motivation);const meta=user.user_metadata||{};try{const {error}=await window.lifeosSupabase.from('profiles').upsert({id:user.id,display_name:meta.display_name||user.email?.split('@')[0]||'사용자',ranking_visible:meta.ranking_visible===true,avatar_url:meta.avatar_url||meta.picture||null,total_points:summary.total,tree_count:summary.completed,updated_at:new Date().toISOString()},{onConflict:'id'});if(error)throw error;return true}catch(error){console.warn('랭킹 프로필 저장 실패',error);return false}}
   let rankingSyncTimer;window.lifeosQueueRankingSync=function(){clearTimeout(rankingSyncTimer);if(!remoteDataReady)return;rankingSyncTimer=setTimeout(()=>{if(!remoteDataReady)return;rememberGrowth();syncRankingProfile().then(()=>{if(state.view==='ranking')loadRanking()})},400)};
@@ -481,7 +481,60 @@ async function loadRanking(){const box=document.querySelector('#ranking-list');i
   const onboardingStyle=document.createElement('style');onboardingStyle.textContent='.onboarding-dialog{margin:auto;width:420px;max-width:calc(100% - 28px);padding:28px;position:fixed}.tour-step-0,.tour-step-1,.tour-step-2,.tour-step-3{left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);margin:0}.tour-arrow{display:none}.onboarding-dialog{border:1px solid var(--line);border-radius:20px;background:var(--paper);color:var(--ink);box-shadow:0 25px 80px #0003}.onboarding-dialog::backdrop{background:#16231d99;backdrop-filter:blur(5px)}.onboarding-step h2{margin:16px 0 9px;font-size:21px}.onboarding-step p{color:var(--muted);line-height:1.8}.onboarding-dots{display:flex;gap:6px;margin-top:24px}.onboarding-dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.onboarding-dots i.active{background:var(--green)}';document.head.append(onboardingStyle);
   render();const maybeShowOnboarding=()=>{if(localStorage.getItem('lifeos-onboarding-seen'))return;if(typeof window.lifeosCurrentUser===typeof undefined){setTimeout(maybeShowOnboarding,200);return}showOnboarding()};setTimeout(maybeShowOnboarding,500);
 })();
-</script><script src="./fixed-money.js?v=20261008-filefix"></script><script src="./calendar-extras.js?v=20261011-shape-glyphs"></script><script src="./memo-organizer.js?v=20261011-memo-photo"></script><script src="./page-shortcuts.js?v=20261014-tree-forest-shortcut"></script></body>
+</script><script src="./fixed-money.js?v=20261008-filefix"></script><script src="./calendar-extras.js?v=20261011-shape-glyphs"></script><script src="./memo-organizer.js?v=20261011-memo-photo"></script><script src="./page-shortcuts.js?v=20261014-tree-forest-shortcut"></script><style>
+  .settings-account-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
+  .account-delete-trigger{color:#a34a45;border-color:#dfb7b2}
+  .account-delete-trigger:hover{background:#fff3f1}
+  .account-deletion-dialog{width:min(480px,calc(100vw - 30px));max-width:none;border:1px solid #e2d7d4;border-radius:20px;padding:28px;background:#fff;color:var(--ink);box-shadow:0 24px 70px #1d282b35}
+  .account-deletion-dialog::backdrop{background:#2029258a;backdrop-filter:blur(5px)}
+  .account-deletion-dialog .modal-head{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .account-deletion-dialog h2{font-size:20px}
+  .account-deletion-dialog p{margin-top:16px;line-height:1.7}
+  .account-deletion-dialog .delete-warning{color:#9b4d47}
+  .account-deletion-dialog .delete-phrase{display:block;margin:18px 0 11px;padding:13px 14px;background:#fff6f4;border:1px solid #ead1cc;border-radius:10px;font-weight:700;overflow-wrap:anywhere}
+  .account-deletion-dialog input{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:10px;background:#fff;color:var(--ink)}
+  .account-deletion-dialog .delete-error{min-height:22px;color:#a34a45;font-size:12px}
+  .account-deletion-dialog .modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:20px}
+  .account-deletion-dialog .delete-confirm{background:#a34a45;color:#fff;border-radius:10px;padding:10px 16px;font-weight:700}
+  .account-deletion-dialog .delete-confirm:hover{background:#8e3d39}
+  @media(max-width:600px){.settings-row:has(.settings-account-actions){align-items:flex-start}.settings-account-actions{max-width:100%}.account-deletion-dialog{padding:22px}}
+</style>
+<script>
+(() => {
+  const dialog=document.createElement('dialog');
+  dialog.className='account-deletion-dialog';
+  dialog.setAttribute('aria-labelledby','account-deletion-title');
+  dialog.innerHTML=`<div class="modal-head"><h2 id="account-deletion-title">계정 탈퇴</h2><button type="button" class="icon-btn" data-delete-close aria-label="닫기">✕</button></div><div data-delete-step="1"><p><strong>정말로 탈퇴하시겠습니까?</strong></p><p class="delete-warning">계정, 기록, 랭킹 정보와 업로드한 사진이 영구 삭제됩니다. 삭제 후에는 복구할 수 없습니다.</p><div class="modal-actions"><button type="button" class="outline" data-delete-close>취소</button><button type="button" class="delete-confirm" data-delete-next>탈퇴하기</button></div></div><form data-delete-step="2" hidden><p>계속하려면 아래 문장을 그대로 입력해 주세요. 확인 후 즉시 탈퇴가 진행됩니다.</p><strong class="delete-phrase" data-delete-phrase></strong><input name="confirmation" autocomplete="off" spellcheck="false" aria-label="탈퇴 확인 문구" required><p class="delete-error" role="alert" data-delete-error></p><div class="modal-actions"><button type="button" class="outline" data-delete-back>뒤로</button><button type="submit" class="delete-confirm" data-delete-submit disabled>즉시 탈퇴</button></div></form>`;
+  document.body.append(dialog);
+  let phrase='',pending=false;
+  const localDate=()=>{const parts=Object.fromEntries(new Intl.DateTimeFormat('en-US',{timeZone:'Asia/Seoul',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date()).map(part=>[part.type,part.value]));return `${parts.year}-${parts.month}-${parts.day}`};
+  const step=number=>{dialog.querySelector('[data-delete-step="1"]').hidden=number!==1;dialog.querySelector('[data-delete-step="2"]').hidden=number!==2;dialog.querySelector('[data-delete-error]').textContent='';if(number===2){phrase=`${localDate()}에 계정과 모든 기록을 즉시 삭제하겠습니다`;dialog.querySelector('[data-delete-phrase]').textContent=phrase;dialog.querySelector('[name="confirmation"]').value='';dialog.querySelector('[data-delete-submit]').disabled=true;dialog.querySelector('[name="confirmation"]').focus()}};
+  document.addEventListener('click',event=>{if(!event.target.closest('[data-account-delete]'))return;if(!window.lifeosCurrentUser){toast('먼저 로그인해 주세요.');return}step(1);dialog.showModal()});
+  dialog.addEventListener('cancel',event=>{if(pending)event.preventDefault()});
+  dialog.addEventListener('click',event=>{if(event.target.closest('[data-delete-close]')){if(!pending)dialog.close();return}if(event.target.closest('[data-delete-next]')){step(2);return}if(event.target.closest('[data-delete-back]'))step(1)});
+  dialog.addEventListener('input',event=>{if(event.target.name==='confirmation')dialog.querySelector('[data-delete-submit]').disabled=event.target.value!==phrase});
+  dialog.querySelector('form').addEventListener('submit',async event=>{
+    event.preventDefault();
+    if(pending||event.target.elements.confirmation.value!==phrase)return;
+    const errorBox=dialog.querySelector('[data-delete-error]');
+    if(['localhost','127.0.0.1'].includes(location.hostname)){errorBox.textContent='실제 배포 사이트에서만 계정을 탈퇴할 수 있어요.';return}
+    pending=true;const submit=dialog.querySelector('[data-delete-submit]');submit.disabled=true;submit.textContent='탈퇴 처리 중…';errorBox.textContent='';
+    try{
+      const {data:{session},error:sessionError}=await window.lifeosSupabase.auth.getSession();
+      if(sessionError||!session?.access_token)throw new Error('로그인이 만료되었습니다. 다시 로그인해 주세요.');
+      const response=await fetch('/api/delete-account',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`},body:JSON.stringify({confirmation:phrase})});
+      const result=await response.json().catch(()=>({}));
+      if(!response.ok)throw new Error(result.error||'탈퇴를 완료하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+      dialog.close();
+      remoteUser=null;remoteDataReady=false;remoteSyncTimers.forEach(timer=>clearTimeout(timer));remoteSyncTimers.clear();
+      try{await window.lifeosSupabase.auth.signOut()}catch(error){console.warn('탈퇴 후 로그아웃 실패',error)}
+      localStorage.removeItem(STORAGE_KEY);Repository.data=seed();renderAccount(null);state.view='dashboard';render();toast('계정 탈퇴가 완료되었습니다.');
+    }catch(error){errorBox.textContent=error.message||'탈퇴 처리 중 오류가 발생했습니다.'}
+    finally{pending=false;submit.textContent='즉시 탈퇴';submit.disabled=event.target.elements.confirmation.value!==phrase}
+  });
+})();
+</script>
+</body>
 </html>
 
 
