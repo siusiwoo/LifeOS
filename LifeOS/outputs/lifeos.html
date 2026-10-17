@@ -142,9 +142,9 @@ const Repository={
  getDay(date){const day=this.data.days[date]||blankDay();return {...blankDay(),...day,notes:Array.isArray(day.notes)?day.notes:[]}},
  getCategory(id){return this.data.categories.find(c=>c.id===id)||{name:'기타',icon:'◇'}},
  save(){try{localStorage.setItem(STORAGE_KEY,JSON.stringify(this.data));}catch{storageAvailable=false;}updateStorageStatus();if(remoteDataReady)window.lifeosQueueRankingSync?.()},
- upsert(date,kind,record){const day=this.data.days[date]??=blankDay();if(kind==='reflection'){day.reflection=record.title;}else{const list=day[collection(kind)],index=list.findIndex(r=>r.id===record.id);index<0?list.push(record):list.splice(index,1,record);}this.save();queueRemoteSync(date)},
- remove(date,kind,id){const day=this.data.days[date];if(!day)return;if(kind==='reflection')day.reflection='';else day[collection(kind)]=day[collection(kind)].filter(r=>r.id!==id);this.save();queueRemoteSync(date)},
- toggle(date,id){const record=this.getDay(date).work.find(r=>r.id===id);if(record){record.done=!record.done;this.save();queueRemoteSync(date)}}
+ upsert(date,kind,record){const day=this.data.days[date]??=blankDay();if(kind==='reflection'){day.reflection=record.title;}else{const list=day[collection(kind)],index=list.findIndex(r=>r.id===record.id);index<0?list.push(record):list.splice(index,1,record);}this.save();if(typeof rememberGrowth==='function')rememberGrowth();queueRemoteSync(date)},
+ remove(date,kind,id){const day=this.data.days[date];if(!day)return;if(kind==='reflection')day.reflection='';else day[collection(kind)]=day[collection(kind)].filter(r=>r.id!==id);this.save();if(typeof rememberGrowth==='function')rememberGrowth();queueRemoteSync(date)},
+ toggle(date,id){const record=this.getDay(date).work.find(r=>r.id===id);if(record){record.done=!record.done;this.save();if(typeof rememberGrowth==='function')rememberGrowth();queueRemoteSync(date)}}
 };
 const collection=kind=>kind==='asset'?'assets':kind==='expense'?'expenses':kind==='note'?'notes':kind;
 let remoteUser=null;
@@ -548,6 +548,8 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
 </script>
 </body>
 </html>
+
+
 
 
 
