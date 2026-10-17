@@ -44,13 +44,18 @@ module.exports = async function handler(request, response) {
     const now = Date.now();
     let sent = 0;
     let failed = 0;
+    let dueEvents = 0;
+    let subscriptionCount = 0;
     const subscriptionsByUser = new Map();
     for (const record of records) {
       const events = record.data?.motivation?.calendarEvents;
       const due = dueNotifications(events, now);
       if (!due.length) continue;
+      dueEvents += due.length;
       if (!subscriptionsByUser.has(record.user_id)) {
-        subscriptionsByUser.set(record.user_id, await readAll(admin.from('calendar_push_subscriptions').select('id,endpoint,p256dh,auth').eq('user_id', record.user_id)));
+        const subscriptions = await readAll(admin.from('calendar_push_subscriptions').select('id,endpoint,p256dh,auth').eq('user_id', record.user_id));
+        subscriptionsByUser.set(record.user_id, subscriptions);
+        subscriptionCount += subscriptions.length;
       }
       for (const subscription of subscriptionsByUser.get(record.user_id)) {
         for (const notice of due) {
@@ -87,8 +92,8 @@ module.exports = async function handler(request, response) {
         }
       }
     }
-    console.log('LifeOS calendar push result', { checked: records.length, sent, failed });
-    return response.status(200).json({ checked: records.length, sent, failed });
+    console.log('LifeOS calendar push result', { checked: records.length, dueEvents, subscriptionCount, sent, failed });
+    return response.status(200).json({ checked: records.length, dueEvents, subscriptionCount, sent, failed });
   } catch (error) {
     console.error('Calendar push job failed', error);
     return response.status(500).json({ error: 'Calendar push job failed' });
