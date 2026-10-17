@@ -41,9 +41,22 @@ function treeSummary(settings = {}) {
   return {events,total,completed,progress,stage,stages};
 }
 function growthTree(stage) {
-  const leaves = [[87,98,-30],[113,82,30],[82,69,-35],[117,55,30],[97,40,-10],[66,49,-40],[137,39,40],[70,24,-25],[121,17,25]];
-  const counts = [0,2,4,6,9];
-  return `<svg class="growth-tree" viewBox="0 0 200 155" role="img" aria-label="성장 나무 ${stage+1}단계"><ellipse cx="100" cy="140" rx="48" ry="6" class="tree-ground"/>${stage===0?'<ellipse cx="100" cy="129" rx="9" ry="12" class="tree-seed"/>':`<path d="M100 137 Q96 100 101 ${stage===1?83:stage===2?58:27}" class="tree-trunk"/>${leaves.slice(0,counts[stage]).map(([x,y,angle])=>`<path d="M100 ${y+20} L${x} ${y+5}" class="tree-branch"/><ellipse cx="${x}" cy="${y}" rx="10" ry="17" transform="rotate(${angle} ${x} ${y})" class="tree-leaf"/>`).join('')}`}</svg>`;
+  // Keep the five stages aligned with the illustrated seed-to-tree reference.
+  const soil = '<path class="tree-ground" d="M41 138 Q48 128 63 129 Q73 120 86 124 Q100 116 114 124 Q129 122 137 130 Q153 130 160 140 Q126 146 100 145 Q70 146 41 138Z"/><g class="tree-soil-detail"><circle cx="63" cy="136" r="2"/><circle cx="77" cy="131" r="1.5"/><circle cx="128" cy="134" r="2"/><circle cx="143" cy="139" r="1.4"/></g>';
+  const leaf = (x, y, angle, size = 1) => `<g transform="translate(${x} ${y}) rotate(${angle}) scale(${size})"><path class="tree-leaf" d="M0 0 C-12 -10 -15 -27 0 -39 C15 -27 12 -10 0 0Z"/><path class="tree-leaf-vein" d="M0 -1 Q1 -19 0 -35"/></g>`;
+  let plant;
+  if (stage === 0) {
+    plant = '<g transform="translate(100 126) rotate(-23)"><ellipse class="tree-seed" rx="17" ry="10"/><path class="tree-seed-mark" d="M-9 3 Q0 -5 11 -4"/></g>';
+  } else if (stage === 1) {
+    plant = `<path class="tree-stem" d="M100 128 Q97 106 104 91"/>${leaf(104, 91, 45, .85)}`;
+  } else if (stage === 2) {
+    plant = `<path class="tree-stem" d="M100 128 Q100 102 100 77 M100 108 Q89 94 80 88 M100 106 Q111 94 121 89"/>${leaf(100, 77, 0, .9)}${leaf(80, 88, -52, .82)}${leaf(121, 89, 52, .82)}`;
+  } else if (stage === 3) {
+    plant = `<path class="tree-stem" d="M100 129 Q99 96 100 50 M100 110 Q87 96 75 95 M100 109 Q113 96 126 95 M100 82 Q88 69 80 65 M100 81 Q112 68 120 65"/>${leaf(100, 50, 0, .85)}${leaf(80, 65, -48, .72)}${leaf(120, 65, 48, .72)}${leaf(75, 95, -58, .72)}${leaf(126, 95, 58, .72)}`;
+  } else {
+    plant = '<path class="tree-trunk" d="M96 129 Q98 109 98 95 Q91 82 78 72 M102 128 Q100 107 101 96 Q110 82 126 72 M99 104 Q99 88 100 69"/><path class="tree-canopy" d="M47 91 Q38 82 43 70 Q41 56 53 50 Q54 35 68 33 Q77 22 91 27 Q101 12 116 20 Q131 17 140 31 Q155 30 160 44 Q173 49 171 63 Q181 75 172 87 Q174 102 159 106 Q148 114 137 105 Q123 113 113 104 Q99 114 89 105 Q76 112 68 101 Q52 106 47 91Z"/><path class="tree-canopy-detail" d="M73 62 Q81 48 91 58 M114 49 Q124 38 135 47 M130 78 Q140 66 150 75 M68 84 Q78 91 87 80"/>';
+  }
+  return `<svg class="growth-tree" viewBox="0 0 200 155" role="img" aria-label="성장 나무 ${stage + 1}단계">${soil}${plant}</svg>`;
 }
 
 
@@ -295,4 +308,6 @@ function calendarView() {
   const title = mode === 'year' ? `${year}년` : mode === 'week' ? `${state.date.replaceAll('-', '.')} 주` : `${year}.${String(month + 1).padStart(2, '0')}`;
   return `<section class="card calendar-card"><div class="card-head"><div class="card-title"><span class="section-icon">${svg('calendar')}</span><h2>${title}</h2></div><div class="calendar-month-controls"><div class="calendar-view-switcher" role="group" aria-label="달력 보기"><button type="button" class="${mode==='year'?'active':''}" data-calendar-mode="year">년</button><button type="button" class="${mode==='month'?'active':''}" data-calendar-mode="month">월</button><button type="button" class="${mode==='week'?'active':''}" data-calendar-mode="week">주</button></div><button type="button" class="outline calendar-today-button" data-calendar-today>오늘</button><button type="button" class="icon-btn" data-calendar-nav="-1" aria-label="이전">‹</button><button type="button" class="icon-btn" data-calendar-nav="1" aria-label="다음">›</button></div></div><div class="calendar-search"><label for="calendar-search-input">기록 검색</label><input id="calendar-search-input" data-calendar-search type="search" value="${esc(state.calendarQuery || '')}" placeholder="메모·일정 검색…" autocomplete="off"></div><div class="calendar-search-results" data-calendar-search-results>${calendarSearchResults(state.calendarQuery)}</div><div class="calendar-legend"><span><span class="calendar-today-legend-mark" aria-hidden="true"></span> 오늘</span><span><i class="calendar-legend-color holiday"></i> 공휴일</span><span><i class="calendar-legend-color event"></i> 일정</span><span><i class="calendar-legend-color money-income"></i> 수입</span><span><i class="calendar-legend-color money-expense"></i> 소비</span></div><div class="calendar-weekdays">${weekdays.map(name => `<span>${name}</span>`).join('')}</div><div class="calendar-grid calendar-grid-${mode}">${grid}</div></section><section class="card calendar-day-summary"><div class="card-head"><div><h2>${state.date.replaceAll('-', '.')} 기록</h2><p class="muted">날짜를 눌러 그날의 업무·배움·소비 기록을 확인하세요.</p></div><span class="pill">${state.date === currentDate ? '오늘' : '선택한 날짜'}</span></div><div class="calendar-record-list">${records.map(record => `<div><span>${record}</span></div>`).join('')}</div>${entries.length ? `<div class="calendar-entries"><strong>기록 내용</strong>${entries.map(entry => `<div class="calendar-entry"><span class="pill">${entry.label}</span><span>${esc(entry.title)}</span></div>`).join('')}</div>` : ''}${notes.length ? `<div class="calendar-notes"><strong>메모</strong>${notes.map(note => `<button type="button" class="calendar-note" data-note-view="${esc(note.id)}"><span>${esc(note.title)}</span><small>${esc(note.createdAt || state.date)}</small></button>`).join('')}</div>` : '<p class="empty">이 날짜에는 메모가 없어요.</p>'}</section>`;
 }
+
+
 
