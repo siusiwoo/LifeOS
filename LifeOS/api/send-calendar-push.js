@@ -46,6 +46,9 @@ module.exports = async function handler(request, response) {
     let failed = 0;
     let dueEvents = 0;
     let subscriptionCount = 0;
+    let calendarEventCount = 0;
+    let reminderConfiguredCount = 0;
+    const eventDiagnostics = [];
     const subscriptionsByUser = new Map();
     for (const record of records) {
       if (!subscriptionsByUser.has(record.user_id)) {
@@ -53,7 +56,10 @@ module.exports = async function handler(request, response) {
         subscriptionsByUser.set(record.user_id, subscriptions);
         subscriptionCount += subscriptions.length;
       }
-      const events = record.data?.motivation?.calendarEvents;
+      const events = Array.isArray(record.data?.motivation?.calendarEvents) ? record.data.motivation.calendarEvents : Array.isArray(record.data?.calendarEvents) ? record.data.calendarEvents : [];
+      calendarEventCount += events.length;
+      reminderConfiguredCount += events.filter(event => event?.reminder !== -1 && event?.reminder !== '-1' && event?.reminder != null).length;
+      if (eventDiagnostics.length < 10) eventDiagnostics.push(...events.slice(0, 10 - eventDiagnostics.length).map(event => ({ date: event?.date || '', time: event?.time || '', reminder: event?.reminder ?? null, kind: event?.kind || '' })));
       const due = dueNotifications(events, now);
       if (!due.length) continue;
       dueEvents += due.length;
@@ -92,10 +98,11 @@ module.exports = async function handler(request, response) {
         }
       }
     }
-    console.log('LifeOS calendar push result', { checked: records.length, dueEvents, subscriptionCount, sent, failed });
-    return response.status(200).json({ checked: records.length, dueEvents, subscriptionCount, sent, failed });
+    console.log('LifeOS calendar push result', { checked: records.length, calendarEventCount, reminderConfiguredCount, dueEvents, subscriptionCount, sent, failed, eventDiagnostics });
+    return response.status(200).json({ checked: records.length, calendarEventCount, reminderConfiguredCount, dueEvents, subscriptionCount, sent, failed, eventDiagnostics });
   } catch (error) {
     console.error('Calendar push job failed', error);
     return response.status(500).json({ error: 'Calendar push job failed' });
   }
 };
+
