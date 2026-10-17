@@ -493,7 +493,7 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
   const onboardingStyle=document.createElement('style');onboardingStyle.textContent='.onboarding-dialog{margin:auto;width:420px;max-width:calc(100% - 28px);padding:28px;position:fixed}.tour-step-0,.tour-step-1,.tour-step-2,.tour-step-3{left:50%;top:50%;right:auto;bottom:auto;transform:translate(-50%,-50%);margin:0}.tour-arrow{display:none}.onboarding-dialog{border:1px solid var(--line);border-radius:20px;background:var(--paper);color:var(--ink);box-shadow:0 25px 80px #0003}.onboarding-dialog::backdrop{background:#16231d99;backdrop-filter:blur(5px)}.onboarding-step h2{margin:16px 0 9px;font-size:21px}.onboarding-step p{color:var(--muted);line-height:1.8}.onboarding-dots{display:flex;gap:6px;margin-top:24px}.onboarding-dots i{width:7px;height:7px;border-radius:50%;background:var(--line)}.onboarding-dots i.active{background:var(--green)}';document.head.append(onboardingStyle);
   render();const maybeShowOnboarding=()=>{if(localStorage.getItem('lifeos-onboarding-seen'))return;if(typeof window.lifeosCurrentUser===typeof undefined){setTimeout(maybeShowOnboarding,200);return}showOnboarding()};setTimeout(maybeShowOnboarding,500);
 })();
-</script><script src="./fixed-money.js?v=20261008-filefix"></script><script src="./calendar-extras.js?v=20261017-calendar-sync"></script><script src="./push-notifications.js?v=20261017-alert-auto"></script><script src="./memo-organizer.js?v=20261011-memo-photo"></script><script src="./page-shortcuts.js?v=20261014-tree-forest-shortcut"></script><style>
+</script><script src="./fixed-money.js?v=20261008-filefix"></script><script src="./calendar-extras.js?v=20261017-calendar-sync"></script><script src="./memo-organizer.js?v=20261011-memo-photo"></script><script src="./page-shortcuts.js?v=20261014-tree-forest-shortcut"></script><style>
   .settings-account-actions{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}
   .account-delete-trigger{color:#a34a45;border-color:#dfb7b2}
   .account-delete-trigger:hover{background:#fff3f1}
@@ -548,6 +548,7 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
 </script>
 </body>
 </html>
+
 
 
 

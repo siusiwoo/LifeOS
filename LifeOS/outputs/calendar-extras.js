@@ -131,7 +131,7 @@ function calendarMoneyAgenda(date){
 }
 function calendarAgendaView(date){
   const events=calendarEventsForDay(date);
-  return `<section class="card calendar-agenda"><div class="card-head"><div><h2>${date.replaceAll('-','.')} 일정·할 일</h2><p class="muted">이 날짜의 일정과 반복 일정을 관리하세요.</p></div><div class="calendar-agenda-add"><button class="outline" data-calendar-add="event">＋ 일정</button><button class="outline" data-calendar-add="task">＋ 할 일</button></div></div><div class="calendar-push-controls"><button type="button" class="outline" data-calendar-push-toggle>사이트를 닫아도 알림 받기</button><span class="muted" data-calendar-push-status>로그인 후 사용할 수 있어요.</span></div>${events.length?`<div class="calendar-agenda-list">${events.map(item=>calendarEventRow(item,date)).join('')}</div>`:'<p class="empty">이 날짜에 등록한 일정이나 할 일이 없어요.</p>'}${calendarMoneyAgenda(date)}</section>`;
+  return `<section class="card calendar-agenda"><div class="card-head"><div><h2>${date.replaceAll('-','.')} 일정·할 일</h2><p class="muted">이 날짜의 일정과 반복 일정을 관리하세요.</p></div><div class="calendar-agenda-add"><button class="outline" data-calendar-add="event">＋ 일정</button><button class="outline" data-calendar-add="task">＋ 할 일</button></div></div>${events.length?`<div class="calendar-agenda-list">${events.map(item=>calendarEventRow(item,date)).join('')}</div>`:'<p class="empty">이 날짜에 등록한 일정이나 할 일이 없어요.</p>'}${calendarMoneyAgenda(date)}</section>`;
 }
 function calendarUpcomingView(date){
   const rows=[];
@@ -272,3 +272,4 @@ calendarCheckReminders();
 window.addEventListener('lifeos-auth',()=>{if(calendarEventDialog.open)calendarEventDialog.close();if(calendarDeleteDialog.open)calendarDeleteDialog.close();render();setTimeout(calendarMaybeShowToday,1200)});
 render();
 setTimeout(calendarMaybeShowToday,500);
+
