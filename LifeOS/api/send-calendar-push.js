@@ -48,15 +48,15 @@ module.exports = async function handler(request, response) {
     let subscriptionCount = 0;
     const subscriptionsByUser = new Map();
     for (const record of records) {
-      const events = record.data?.motivation?.calendarEvents;
-      const due = dueNotifications(events, now);
-      if (!due.length) continue;
-      dueEvents += due.length;
       if (!subscriptionsByUser.has(record.user_id)) {
         const subscriptions = await readAll(admin.from('calendar_push_subscriptions').select('id,endpoint,p256dh,auth').eq('user_id', record.user_id));
         subscriptionsByUser.set(record.user_id, subscriptions);
         subscriptionCount += subscriptions.length;
       }
+      const events = record.data?.motivation?.calendarEvents;
+      const due = dueNotifications(events, now);
+      if (!due.length) continue;
+      dueEvents += due.length;
       for (const subscription of subscriptionsByUser.get(record.user_id)) {
         for (const notice of due) {
           const claim = {
