@@ -30,13 +30,17 @@
 .calendar-cell .calendar-extra-marks{display:flex;justify-content:center;align-items:center;gap:5px;height:12px;line-height:1}
 .calendar-extra-marks .calendar-event-glyph,.calendar-extra-marks .calendar-money-glyph{display:inline-block;width:10px;font-size:10px;line-height:1;background:none}
 .calendar-event-chip,.calendar-money-chip{display:block;width:100%;padding:2px 4px;border-radius:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px;line-height:1.3;text-align:left}
-.calendar-event-chip{background:#e5f0e6;color:#3f7950}.calendar-money-chip{background:#f8ead8;color:#b36f2e}
+.calendar-event-chip{background:#e5f0e6;color:#3f7950}.calendar-money-chip.income{background:#e6eef8;color:#3d6c9e}.calendar-money-chip.expense{background:#f8ead8;color:#b36f2e}
 .calendar-cell.active .calendar-event-chip,.calendar-cell.active .calendar-money-chip{background:#ffffff55;color:#fff}
 .calendar-event-glyph{color:#70a479}
 .calendar-money-glyph{color:#d49a54}
 .calendar-cell.active .calendar-extra-marks span{color:#fff}
 .calendar-legend-glyph{display:inline-block;width:10px;margin-right:4px;text-align:center;font-size:10px;line-height:1}
 .calendar-repeat-end[hidden]{display:none!important}
+.calendar-event-dialog{box-sizing:border-box;width:min(450px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto}
+.calendar-event-dialog input[type=date],.calendar-event-dialog input[type=time]{width:100%;min-width:0;box-sizing:border-box;font-size:16px}
+.calendar-event-dialog .form-grid{min-width:0}
+.calendar-event-dialog .modal-actions{flex-wrap:wrap}
 .calendar-reminder-help{font-size:11px;margin-top:13px;line-height:1.5}
 .calendar-view{grid-template-columns:minmax(0,1fr)}
 .calendar-card .card-head{flex-wrap:wrap}
@@ -47,7 +51,7 @@
 .calendar-view-switcher button.active{background:var(--green);color:#fff;font-weight:700}
 .calendar-legend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:10px 0 8px;color:var(--muted);font-size:11px}
 .calendar-legend-color{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}
-.calendar-legend-color.holiday{background:#e86c5c}.calendar-legend-color.event{background:#78a37b}.calendar-legend-color.money{background:#e0a34d}
+.calendar-legend-color.holiday{background:#e86c5c}.calendar-legend-color.event{background:#78a37b}.calendar-legend-color.money-income{background:#6d99c6}.calendar-legend-color.money-expense{background:#e0a34d}
 .calendar-today-button{font-size:11px;padding:5px 10px}
 .calendar-cell{aspect-ratio:auto;min-height:92px;padding:6px;display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:3px;overflow:hidden;text-align:left}
 .calendar-day-number{align-self:flex-end;font-weight:650;line-height:1.3}
@@ -87,7 +91,7 @@
 .calendar-delete-help{margin-top:10px;font-size:12px}
 .calendar-delete-dialog .modal-actions{flex-wrap:wrap}
 @media(max-width:850px){.calendar-right-column{grid-column:1}}
-@media(max-width:600px){.calendar-agenda-row{flex-wrap:wrap}.calendar-agenda-actions{width:100%;padding-left:18px}.calendar-money-row{flex-wrap:wrap}}
+@media(max-width:600px){.calendar-agenda-row{flex-wrap:wrap}.calendar-agenda-actions{width:100%;padding-left:18px}.calendar-money-row{flex-wrap:wrap}.calendar-event-dialog{padding:18px;border-radius:16px}.calendar-event-dialog .form-grid{gap:11px}.calendar-event-dialog .modal-actions{justify-content:stretch}.calendar-event-dialog .modal-actions button{flex:1;min-width:110px}}
 @media(max-width:850px){.calendar-right-column{grid-template-columns:1fr}}
 @media(max-width:850px){.calendar-grid-year{grid-template-columns:repeat(2,minmax(0,1fr))}.calendar-grid-week .calendar-cell{min-height:130px}}
 @media(max-width:600px){.calendar-cell{min-height:42px;padding:3px;align-items:center;justify-content:center;text-align:center}.calendar-day-number{align-self:center}.calendar-event-previews{display:grid;max-height:18px;overflow:hidden}.calendar-event-preview{font-size:8px;padding:1px 2px}.calendar-event-chip,.calendar-money-chip{font-size:8px;padding:1px 2px}.calendar-cell .record-markers,.calendar-cell .calendar-extra-marks{justify-content:center}.calendar-cell .calendar-extra-marks .calendar-event-glyph{display:inline-block}.calendar-upcoming-row{gap:8px}.calendar-grid-year{grid-template-columns:1fr;gap:8px}.calendar-grid-year .calendar-event-previews{display:none}.calendar-grid-week{overflow-x:auto;grid-template-columns:repeat(7,minmax(82px,1fr))}.calendar-grid-week .calendar-cell{min-height:110px}.calendar-view-switcher button{padding:6px 7px}}

@@ -8,8 +8,7 @@ calendarEventDialog.innerHTML=`<form id="calendar-event-form">
     <label>종류<select name="kind"><option value="event">일정</option><option value="task">할 일</option></select></label>
     <label>제목<input name="title" maxlength="100" required placeholder="예: 병원 예약, 서류 제출"></label>
     <label>날짜<input name="date" type="date" min="1900-01-01" max="2100-12-31" required></label>
-    <label>시작 시간 (선택)<input name="time" type="time"></label>
-    <label>종료 시간 (선택)<input name="endTime" type="time"></label>
+    <label>시간 (선택)<input name="time" type="time"></label>
     <label>반복<select name="repeat"><option value="none">반복 안 함</option><option value="daily">매일</option><option value="weekly">매주</option><option value="monthly">매월</option></select></label>
     <label class="calendar-repeat-end" hidden>반복 종료일 (선택)<input name="repeatEnd" type="date" min="1900-01-01" max="2100-12-31"></label>
     <label>알림<select name="reminder"><option value="-1">알림 없음</option><option value="day">당일 오전 9시 (시간 없는 일정도 가능)</option><option value="0">정해진 시간에</option><option value="5">5분 전</option><option value="15">15분 전</option><option value="60">1시간 전</option><option value="1440">하루 전</option></select></label>
@@ -52,7 +51,7 @@ function calendarMaybeShowToday(){
   if(!events.length)return;
   calendarTodayDialog.querySelector('.calendar-today-date').textContent=`${today.replaceAll('-','.')} 오늘 예정된 일정과 할 일이 있어요.`;
   calendarTodayDialog.querySelector('.calendar-today-list').innerHTML=events.map(item=>{
-    const label=item.time?`${item.time}${item.endTime?`–${item.endTime}`:''}`:'종일';
+    const label=item.time||'종일';
     const type=item.kind==='task'?'할 일':'일정';
     return `<div class="calendar-today-row"><span class="calendar-event-dot" aria-hidden="true"></span><div><strong>${esc(item.title)}</strong><small>${label} · ${type}${item.notes?` · ${esc(item.notes)}`:''}</small></div></div>`;
   }).join('');
@@ -85,7 +84,6 @@ function calendarOpenEvent(kind='event',id=null){
   form.elements.title.value=item?.title||'';
   form.elements.date.value=item?.date||state.date;
   form.elements.time.value=item?.time||'';
-  form.elements.endTime.value=item?.endTime||'';
   form.elements.repeat.value=item?.repeat||'none';
   form.elements.repeatEnd.value=item?.repeatEnd||'';
   form.elements.reminder.value=String(item?.reminder??-1);
@@ -96,7 +94,7 @@ function calendarOpenEvent(kind='event',id=null){
 }
 function calendarEventRow(item,date){
   const done=item.kind==='task'&&(item.doneDates||[]).includes(date);
-  const label=item.time?`${item.time}${item.endTime?`–${item.endTime}`:''}`:'종일';
+  const label=item.time||'종일';
   const repeat=item.repeat&&item.repeat!=='none'?` · ${calendarRepeatLabels[item.repeat]}`:'';
   const note=item.notes?`<small>${esc(item.notes)}</small>`:'';
   const toggle=item.kind==='task'?`<input type="checkbox" data-calendar-task="${esc(item.id)}" data-calendar-date="${date}" aria-label="${esc(item.title)} 완료" ${done?'checked':''}>`:'<span class="calendar-event-dot" aria-hidden="true"></span>';
@@ -140,7 +138,7 @@ function calendarUpcomingView(date){
   for(let offset=0;offset<7;offset++){
     const day=shift(date,offset);
     for(const item of calendarEventsForDay(day)){
-      const label=item.time?`${item.time}${item.endTime?`–${item.endTime}`:''}`:'종일';
+      const label=item.time||'종일';
       rows.push(`<button type="button" class="calendar-upcoming-row" data-calendar-jump="${day}"><time datetime="${day}">${day.slice(5).replace('-','.')}</time><span><strong>${esc(item.title)}</strong><small>${esc(label)} · ${item.kind==='task'?'할 일':'일정'}</small></span></button>`);
     }
   }
@@ -158,14 +156,15 @@ render=function(){
   document.querySelectorAll('.calendar-cell[data-date]').forEach(cell=>{
     const date=cell.dataset.date;
     const eventCount=calendarEventsForDay(date).length;
-    const moneyCount=date>fixedMoneyToday()?fixedMoneyRules().filter(rule=>calendarNextFixedDate(rule)===date).length:0;
-    if(moneyCount)cell.insertAdjacentHTML('beforeend','<span class="calendar-extra-marks" aria-hidden="true"><span class="calendar-money-chip">예정 수입·소비</span></span>');
+    const moneyRules=date>fixedMoneyToday()?fixedMoneyRules().filter(rule=>calendarNextFixedDate(rule)===date):[];
+    const moneyLabels=[...new Set(moneyRules.map(rule=>rule.kind==='income'?'수입':'소비'))];
+    if(moneyLabels.length)cell.insertAdjacentHTML('beforeend',`<span class="calendar-extra-marks" aria-hidden="true">${moneyLabels.map(label=>`<span class="calendar-money-chip ${label==='수입'?'income':'expense'}">${label}</span>`).join('')}</span>`);
   });
 };
 async function calendarShare(id,date){
   const item=calendarEvents().find(event=>event.id===id);
   if(!item)return;
-  const text=`${item.kind==='task'?'할 일':'일정'}: ${item.title}\n날짜: ${date}${item.time?` ${item.time}${item.endTime?`–${item.endTime}`:''}`:''}\n반복: ${calendarRepeatLabels[item.repeat]||'일회성'}${item.notes?`\n메모: ${item.notes}`:''}`;
+  const text=`${item.kind==='task'?'할 일':'일정'}: ${item.title}\n날짜: ${date}${item.time?` ${item.time}`:''}\n반복: ${calendarRepeatLabels[item.repeat]||'일회성'}${item.notes?`\n메모: ${item.notes}`:''}`;
   try{
     if(navigator.share){await navigator.share({title:item.title,text});return}
     await navigator.clipboard.writeText(text);
@@ -226,9 +225,9 @@ document.addEventListener('change',event=>{
 calendarEventDialog.querySelector('form').addEventListener('submit',async event=>{
   event.preventDefault();
   const form=event.currentTarget,values=Object.fromEntries(new FormData(form)),title=String(values.title||'').trim(),date=String(values.date||''),repeatEnd=String(values.repeatEnd||''),reminder=values.reminder==='day'?'day':Number(values.reminder);
-  if(!title||!validDate(date)||!['event','task'].includes(values.kind)||!calendarRepeatLabels[values.repeat]||repeatEnd&&(!validDate(repeatEnd)||repeatEnd<date)||![-1,0,5,15,60,1440,'day'].includes(reminder)||typeof reminder==='number'&&reminder>=0&&!values.time||values.endTime&&(!values.time||values.endTime<=values.time)){toast('날짜와 시간을 확인해 주세요. 시간 기준 알림은 시작 시간이 필요합니다.');return}
+  if(!title||!validDate(date)||!['event','task'].includes(values.kind)||!calendarRepeatLabels[values.repeat]||repeatEnd&&(!validDate(repeatEnd)||repeatEnd<date)||![-1,0,5,15,60,1440,'day'].includes(reminder)||typeof reminder==='number'&&reminder>=0&&!values.time){toast('날짜와 시간을 확인해 주세요. 알림을 시간 기준으로 설정했다면 시간을 입력해 주세요.');return}
   const events=Repository.data.motivation ||= {},list=events.calendarEvents ||= [],old=list.find(item=>item.id===form.dataset.editId);
-  const item={id:old?.id||`ce-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,kind:values.kind,title,date,time:values.time||'',endTime:values.endTime||'',repeat:values.repeat,repeatEnd:values.repeat==='none'?'':repeatEnd,reminder,notes:String(values.notes||'').trim(),doneDates:old?.doneDates||[],excludedDates:old?.excludedDates||[]};
+  const item={id:old?.id||`ce-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,kind:values.kind,title,date,time:values.time||'',endTime:'',repeat:values.repeat,repeatEnd:values.repeat==='none'?'':repeatEnd,reminder,notes:String(values.notes||'').trim(),doneDates:old?.doneDates||[],excludedDates:old?.excludedDates||[]};
   if(old)Object.assign(old,item);else list.push(item);
   calendarEventDialog.close();
   calendarSaveEvents();
