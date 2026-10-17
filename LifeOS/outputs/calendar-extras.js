@@ -69,7 +69,7 @@ function calendarSearchEventDate(item){
   }
   return null;
 }
-function calendarSaveEvents(){Repository.save();syncCategoriesToSupabase();render()}
+async function calendarSaveEvents(){Repository.save();try{if(remoteUser)await syncCategoriesToSupabase()}catch(error){console.warn('캘린더 Supabase 동기화 실패',error)}render()}
 function calendarRepeatVisibility(){
   const label=calendarEventDialog.querySelector('.calendar-repeat-end');
   label.hidden=calendarEventDialog.querySelector('[name="repeat"]').value==='none';
@@ -230,7 +230,7 @@ calendarEventDialog.querySelector('form').addEventListener('submit',async event=
   const item={id:old?.id||`ce-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,kind:values.kind,title,date,time:values.time||'',endTime:'',repeat:values.repeat,repeatEnd:values.repeat==='none'?'':repeatEnd,reminder,notes:String(values.notes||'').trim(),doneDates:old?.doneDates||[],excludedDates:old?.excludedDates||[]};
   if(old)Object.assign(old,item);else list.push(item);
   calendarEventDialog.close();
-  calendarSaveEvents();
+  await calendarSaveEvents();
   if(reminder!==-1){
     const pushRequested=window.lifeosEnablePushFromCalendar?.()===true;
     if(!pushRequested&&'Notification' in window&&Notification.permission==='default'){
