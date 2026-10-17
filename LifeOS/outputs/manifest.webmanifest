@@ -1,0 +1,13 @@
+{
+  "id": "/",
+  "name": "LifeOS",
+  "short_name": "LifeOS",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f6f7f2",
+  "theme_color": "#294e40",
+  "icons": [
+    { "src": "/outputs/lifeos-leaf-icon.png", "sizes": "1254x1254", "type": "image/png" }
+  ]
+}

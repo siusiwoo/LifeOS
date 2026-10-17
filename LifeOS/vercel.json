@@ -22,6 +22,18 @@
       "destination": "/outputs/calendar-extras.js"
     },
     {
+      "source": "/push-notifications.js",
+      "destination": "/outputs/push-notifications.js"
+    },
+    {
+      "source": "/sw.js",
+      "destination": "/outputs/sw.js"
+    },
+    {
+      "source": "/manifest.webmanifest",
+      "destination": "/outputs/manifest.webmanifest"
+    },
+    {
       "source": "/calendar-extras.css",
       "destination": "/outputs/calendar-extras.css"
     },

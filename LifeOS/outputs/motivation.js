@@ -185,8 +185,10 @@ document.addEventListener('change',event=>{
 
 function shiftMonth(date, amount) {
   const value = parseDate(date);
+  const day = value.getDate();
   value.setDate(1);
   value.setMonth(value.getMonth() + amount);
+  value.setDate(Math.min(day, new Date(value.getFullYear(), value.getMonth() + 1, 0).getDate()));
   return dateKey(value);
 }
 
@@ -203,7 +205,8 @@ function calendarSearchResults(query) {
     for (const event of calendarEvents()) {
       if (!validDate(event.date)) continue;
       if (`${event.title || ''} ${event.notes || ''}`.toLowerCase().includes(clean)) {
-        results.push({date:event.date, kind:event.kind === 'task' ? 'task' : 'event', record:event});
+        const date = typeof calendarSearchEventDate === 'function' ? calendarSearchEventDate(event) : event.date;
+        if (date) results.push({date, kind:event.kind === 'task' ? 'task' : 'event', record:event});
       }
     }
   }
@@ -221,39 +224,75 @@ function calendarSearchResults(query) {
   }).join('');
 }
 
-function calendarView() {
-  const selected = parseDate(state.date);
-  const year = selected.getFullYear();
-  const month = selected.getMonth();
+function calendarHoliday(date) {
+  const fixed = {'01-01':'신정','03-01':'삼일절','05-05':'어린이날','06-06':'현충일','08-15':'광복절','10-03':'개천절','10-09':'한글날','12-25':'성탄절'};
+  const variable = {
+    '2026-02-16':'설날 연휴','2026-02-17':'설날','2026-02-18':'설날 연휴',
+    '2026-05-24':'부처님오신날','2026-05-25':'대체공휴일','2026-06-03':'지방선거일',
+    '2026-09-24':'추석 연휴','2026-09-25':'추석','2026-09-26':'추석 연휴','2026-10-05':'대체공휴일'
+  };
+  return variable[date] || fixed[date.slice(5)] || '';
+}
+function calendarDayRecords(date) {
+  const day = typeof dayWithFixedMoney === 'function' ? dayWithFixedMoney(date) : Repository.getDay(date);
+  return {...day, work:(day.work || []).filter(item => item.recurrenceType !== 'recurring')};
+}
+function calendarCell(key, dayNumber, currentDate) {
+  const day = calendarDayRecords(key);
+  const recorded = day.work.length || day.growth.length || day.expenses.length || day.income.length || day.notes.length || day.reflection;
+  const events = typeof calendarEventsForDay === 'function' ? calendarEventsForDay(key) : [];
+  const holiday = calendarHoliday(key);
+  const previews = events.slice(0, 2).map(item => `<span class="calendar-event-preview ${item.kind === 'task' ? 'task' : 'event'}">${item.time ? `${esc(item.time)} · ` : ''}${esc(item.title)}</span>`).join('');
+  const more = events.length > 2 ? `<span class="calendar-event-more">+${events.length - 2}개</span>` : '';
+  const holidayLine = holiday ? `<span class="calendar-holiday-label">${esc(holiday)}</span>` : '';
+  return `<button type="button" class="calendar-cell ${key === state.date ? 'active' : ''} ${key === currentDate ? 'today' : ''} ${recorded ? 'has-record' : ''} ${holiday ? 'holiday' : ''}" data-date="${key}" aria-label="${key}${holiday ? ` ${holiday}` : ''}${key === currentDate ? ' 오늘' : ''}, 일정·할 일 ${events.length}개, 기록 보기"><span class="calendar-day-number">${dayNumber}</span>${holidayLine}${events.length ? `<span class="calendar-event-previews">${previews}${more}</span>` : ''}</button>`;
+}
+function calendarMonthGrid(year, month, currentDate) {
   const firstDay = new Date(year, month, 1, 12);
   const offset = (firstDay.getDay() + 6) % 7;
   const daysInMonth = new Date(year, month + 1, 0, 12).getDate();
-  const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
   const cells = [];
   for (let index = 0; index < offset; index += 1) cells.push('<span class="calendar-cell calendar-empty" aria-hidden="true"></span>');
   for (let dayNumber = 1; dayNumber <= daysInMonth; dayNumber += 1) {
     const key = dateKey(new Date(year, month, dayNumber, 12));
-    const recorded = hasData(key);
-    cells.push(`<button type="button" class="calendar-cell ${key === state.date ? 'active' : ''} ${key === today ? 'today' : ''} ${recorded ? 'has-record' : ''}" data-date="${key}" aria-label="${key}${key === today ? ' 오늘' : ''} 기록 보기"><span>${dayNumber}</span>${dateMarkers(key)}</button>`);
+    cells.push(calendarCell(key, dayNumber, currentDate));
   }
+  return cells.join('');
+}
+function calendarWeekGrid(date, currentDate) {
+  const start = shift(date, -((parseDate(date).getDay() + 6) % 7));
+  return Array.from({length:7}, (_, index) => { const key = shift(start, index); return calendarCell(key, parseDate(key).getDate(), currentDate); }).join('');
+}
+function calendarYearGrid(year, currentDate) {
+  return Array.from({length:12}, (_, month) => `<div class="calendar-mini-month"><strong>${month + 1}월</strong><div class="calendar-mini-grid">${calendarMonthGrid(year, month, currentDate)}</div></div>`).join('');
+}
+function calendarView() {
+  const selected = parseDate(state.date);
+  const currentDate = dateKey(new Date());
+  const year = selected.getFullYear();
+  const month = selected.getMonth();
+  const mode = state.calendarMode || 'month';
+  const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  const grid = mode === 'year' ? calendarYearGrid(year, currentDate) : mode === 'week' ? calendarWeekGrid(state.date, currentDate) : calendarMonthGrid(year, month, currentDate);
   const day = typeof dayWithFixedMoney==='function'?dayWithFixedMoney(state.date):Repository.getDay(state.date);
-  const done = day.work.filter(item => item.done).length;
+  const done = day.work.filter(item => item.recurrenceType !== 'recurring' && item.done).length;
   const minutes = day.growth.reduce((sum, item) => sum + Number(item.minutes || 0), 0);
   const expense = day.expenses.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const income = day.income.reduce((sum, item) => sum + Number(item.amount || 0), 0);
   const notes = day.notes || [];
   const records = [
-    `업무 완료 ${done}개 / ${day.work.length}개`,
+    `업무 완료 ${done}개 / ${day.work.filter(item => item.recurrenceType !== 'recurring').length}개`,
     `배움 ${Math.floor(minutes / 60)}시간 ${minutes % 60}분`,
     `소비 ${won(expense)}원 · 수입 ${won(income)}원`,
     `메모 ${notes.length}개`
   ];
   const entries = [
-    ...day.work.map(item => ({label: item.done ? '완료한 업무' : '업무', title: item.title})),
+    ...day.work.filter(item => item.recurrenceType !== 'recurring').map(item => ({label: item.done ? '완료한 업무' : '업무', title: item.title})),
     ...day.growth.map(item => ({label: '배움', title: item.title})),
     ...day.expenses.map(item => ({label: '소비', title: `${item.title} · ${won(item.amount)}원` })),
     ...day.income.map(item => ({label: '수입', title: `${item.title} · ${won(item.amount)}원` }))
   ];
-  return `<section class="card calendar-card"><div class="card-head"><div class="card-title"><span class="section-icon">${svg('calendar')}</span><h2>${year}.${String(month + 1).padStart(2, '0')}</h2></div><div class="calendar-month-controls"><button type="button" class="icon-btn" data-calendar-month="-1" aria-label="이전 달">‹</button><button type="button" class="icon-btn" data-calendar-month="1" aria-label="다음 달">›</button></div></div><div class="calendar-search"><label for="calendar-search-input">기록 검색</label><input id="calendar-search-input" data-calendar-search type="search" value="${esc(state.calendarQuery || '')}" placeholder="메모·일정 검색…" autocomplete="off"></div><div class="calendar-search-results" data-calendar-search-results>${calendarSearchResults(state.calendarQuery)}</div><div class="calendar-legend"><span><span class="calendar-today-legend-mark" aria-hidden="true"></span> 오늘</span><span><span class="record-mark-star">★</span> 일회성 할 일</span><span><b class="record-mark-dot"></b> 지속적 업무</span></div><div class="calendar-weekdays">${weekdays.map(name => `<span>${name}</span>`).join('')}</div><div class="calendar-grid">${cells.join('')}</div></section><section class="card calendar-day-summary"><div class="card-head"><div><h2>${state.date.replaceAll('-', '.')} 기록</h2><p class="muted">날짜를 눌러 그날의 업무·배움·소비 기록을 확인하세요.</p></div><span class="pill">${state.date === today ? '오늘' : '선택한 날짜'}</span></div><div class="calendar-record-list">${records.map(record => `<div><span>${record}</span></div>`).join('')}</div>${entries.length ? `<div class="calendar-entries"><strong>기록 내용</strong>${entries.map(entry => `<div class="calendar-entry"><span class="pill">${entry.label}</span><span>${esc(entry.title)}</span></div>`).join('')}</div>` : ''}${notes.length ? `<div class="calendar-notes"><strong>메모</strong>${notes.map(note => `<button type="button" class="calendar-note" data-note-view="${esc(note.id)}"><span>${esc(note.title)}</span><small>${esc(note.createdAt || state.date)}</small></button>`).join('')}</div>` : '<p class="empty">이 날짜에는 메모가 없어요.</p>'}</section>`;
+  const title = mode === 'year' ? `${year}년` : mode === 'week' ? `${state.date.replaceAll('-', '.')} 주` : `${year}.${String(month + 1).padStart(2, '0')}`;
+  return `<section class="card calendar-card"><div class="card-head"><div class="card-title"><span class="section-icon">${svg('calendar')}</span><h2>${title}</h2></div><div class="calendar-month-controls"><div class="calendar-view-switcher" role="group" aria-label="달력 보기"><button type="button" class="${mode==='year'?'active':''}" data-calendar-mode="year">년</button><button type="button" class="${mode==='month'?'active':''}" data-calendar-mode="month">월</button><button type="button" class="${mode==='week'?'active':''}" data-calendar-mode="week">주</button></div><button type="button" class="outline calendar-today-button" data-calendar-today>오늘</button><button type="button" class="icon-btn" data-calendar-nav="-1" aria-label="이전">‹</button><button type="button" class="icon-btn" data-calendar-nav="1" aria-label="다음">›</button></div></div><div class="calendar-search"><label for="calendar-search-input">기록 검색</label><input id="calendar-search-input" data-calendar-search type="search" value="${esc(state.calendarQuery || '')}" placeholder="메모·일정 검색…" autocomplete="off"></div><div class="calendar-search-results" data-calendar-search-results>${calendarSearchResults(state.calendarQuery)}</div><div class="calendar-legend"><span><span class="calendar-today-legend-mark" aria-hidden="true"></span> 오늘</span><span><i class="calendar-legend-color holiday"></i> 공휴일</span><span><i class="calendar-legend-color event"></i> 일정</span><span><i class="calendar-legend-color money"></i> 예정 수입·소비</span></div><div class="calendar-weekdays">${weekdays.map(name => `<span>${name}</span>`).join('')}</div><div class="calendar-grid calendar-grid-${mode}">${grid}</div></section><section class="card calendar-day-summary"><div class="card-head"><div><h2>${state.date.replaceAll('-', '.')} 기록</h2><p class="muted">날짜를 눌러 그날의 업무·배움·소비 기록을 확인하세요.</p></div><span class="pill">${state.date === currentDate ? '오늘' : '선택한 날짜'}</span></div><div class="calendar-record-list">${records.map(record => `<div><span>${record}</span></div>`).join('')}</div>${entries.length ? `<div class="calendar-entries"><strong>기록 내용</strong>${entries.map(entry => `<div class="calendar-entry"><span class="pill">${entry.label}</span><span>${esc(entry.title)}</span></div>`).join('')}</div>` : ''}${notes.length ? `<div class="calendar-notes"><strong>메모</strong>${notes.map(note => `<button type="button" class="calendar-note" data-note-view="${esc(note.id)}"><span>${esc(note.title)}</span><small>${esc(note.createdAt || state.date)}</small></button>`).join('')}</div>` : '<p class="empty">이 날짜에는 메모가 없어요.</p>'}</section>`;
 }
 
