@@ -87,6 +87,7 @@ module.exports = async function handler(request, response) {
         }
       }
     }
+    console.log('LifeOS calendar push result', { checked: records.length, sent, failed });
     return response.status(200).json({ checked: records.length, sent, failed });
   } catch (error) {
     console.error('Calendar push job failed', error);
