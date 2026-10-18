@@ -14,7 +14,7 @@ calendarEventDialog.innerHTML=`<form id="calendar-event-form">
     <label>알림<select name="reminder"><option value="-1">알림 없음</option><option value="day">당일 오전 9시 (시간 없는 일정도 가능)</option><option value="0">정해진 시간에</option><option value="5">5분 전</option><option value="15">15분 전</option><option value="60">1시간 전</option><option value="1440">하루 전</option></select></label>
     <label>메모<textarea name="notes" maxlength="1000" placeholder="장소나 준비할 내용을 적어 두세요."></textarea></label>
   </div>
-  <p class="muted calendar-reminder-help">당일 오전 9시 알림은 시간 없이도 설정할 수 있어요. 사이트를 닫아도 알림을 받으려면 캘린더의 ‘알림 받기’를 켜세요.</p>
+  <p class="muted calendar-reminder-help">당일 오전 9시 알림은 시간 없이도 설정할 수 있어요.</p>
   <div class="modal-actions"><button type="button" class="outline" data-calendar-close>취소</button><button type="submit" class="primary">저장</button></div>
 </form>`;
 document.body.append(calendarEventDialog);
@@ -136,7 +136,7 @@ function calendarMoneyAgenda(date){
 }
 function calendarAgendaView(date){
   const events=calendarEventsForDay(date);
-  return `<section class="card calendar-agenda"><div class="card-head"><div><h2>${date.replaceAll('-','.')} 일정·할 일</h2><p class="muted">이 날짜의 일정과 반복 일정을 관리하세요.</p></div><div class="calendar-agenda-add"><button class="outline" data-calendar-add="event">＋ 일정</button><button class="outline" data-calendar-add="task">＋ 할 일</button></div></div><div class="calendar-notification-controls"><button type="button" class="outline" data-calendar-push-toggle>알림 받기</button><span class="muted" data-calendar-push-status role="status">푸시 알림 상태를 확인하는 중이에요.</span></div>${events.length?`<div class="calendar-agenda-list">${events.map(item=>calendarEventRow(item,date)).join('')}</div>`:'<p class="empty">이 날짜에 등록한 일정이나 할 일이 없어요.</p>'}${calendarMoneyAgenda(date)}</section>`;
+  return `<section class="card calendar-agenda"><div class="card-head"><div><h2>${date.replaceAll('-','.')} 일정·할 일</h2><p class="muted">이 날짜의 일정과 반복 일정을 관리하세요.</p></div><div class="calendar-agenda-add"><button class="outline" data-calendar-add="event">＋ 일정</button><button class="outline" data-calendar-add="task">＋ 할 일</button></div></div><div class="calendar-notification-controls" hidden><button type="button" class="outline" data-calendar-push-toggle>알림 받기</button><span class="muted" data-calendar-push-status role="status">푸시 알림 상태를 확인하는 중이에요.</span></div>${events.length?`<div class="calendar-agenda-list">${events.map(item=>calendarEventRow(item,date)).join('')}</div>`:'<p class="empty">이 날짜에 등록한 일정이나 할 일이 없어요.</p>'}${calendarMoneyAgenda(date)}</section>`;
 }
 function calendarUpcomingView(date){
   const rows=[];

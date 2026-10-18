@@ -96,6 +96,7 @@
 @media(max-width:850px){.calendar-grid-year{grid-template-columns:repeat(2,minmax(0,1fr))}.calendar-grid-week .calendar-cell{min-height:130px}}
 @media(max-width:600px){.calendar-cell{min-height:42px;padding:3px;align-items:center;justify-content:center;text-align:center}.calendar-day-number{align-self:center}.calendar-event-previews{display:grid;max-height:18px;overflow:hidden}.calendar-event-preview{font-size:8px;padding:1px 2px}.calendar-event-chip,.calendar-money-chip{font-size:8px;padding:1px 2px}.calendar-cell .record-markers,.calendar-cell .calendar-extra-marks{justify-content:center}.calendar-cell .calendar-extra-marks .calendar-event-glyph{display:inline-block}.calendar-upcoming-row{gap:8px}.calendar-grid-year{grid-template-columns:1fr;gap:8px}.calendar-grid-year .calendar-event-previews{display:none}.calendar-grid-week{overflow-x:auto;grid-template-columns:repeat(7,minmax(82px,1fr))}.calendar-grid-week .calendar-cell{min-height:110px}.calendar-view-switcher button{padding:6px 7px}}
 .calendar-notification-controls{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:-4px 0 16px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.calendar-notification-controls[hidden]{display:none}
 .calendar-notification-controls button{font-size:12px;font-weight:600;white-space:normal;text-align:center}
 .calendar-notification-controls .muted{font-size:11px;line-height:1.5}
 .calendar-today-dialog{max-width:480px}
