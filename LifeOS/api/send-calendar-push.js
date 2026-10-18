@@ -40,7 +40,7 @@ module.exports = async function handler(request, response) {
   try {
     webPush.setVapidDetails(subject, publicKey, privateKey);
     const admin = createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
-    const records = await readAll(admin.from('lifeos_records').select('user_id,data').eq('kind', 'categories'));
+    const records = await readAll(admin.from('lifeos_records').select('user_id,data,updated_at').eq('kind', 'categories').order('updated_at', { ascending: false, nullsFirst: false }));
     const now = Date.now();
     let sent = 0;
     let failed = 0;
@@ -50,13 +50,18 @@ module.exports = async function handler(request, response) {
     let reminderConfiguredCount = 0;
     const eventDiagnostics = [];
     const subscriptionsByUser = new Map();
+    const seenUsers = new Set();
     for (const record of records) {
+      // Older duplicate category rows must not override or resend a user's current calendar.
+      if (seenUsers.has(record.user_id)) continue;
+      seenUsers.add(record.user_id);
       if (!subscriptionsByUser.has(record.user_id)) {
         const subscriptions = await readAll(admin.from('calendar_push_subscriptions').select('id,endpoint,p256dh,auth').eq('user_id', record.user_id));
         subscriptionsByUser.set(record.user_id, subscriptions);
         subscriptionCount += subscriptions.length;
       }
-      const events = Array.isArray(record.data?.motivation?.calendarEvents) ? record.data.motivation.calendarEvents : Array.isArray(record.data?.calendarEvents) ? record.data.calendarEvents : [];
+      // The browser also prefers the top-level copy when both saved copies exist.
+      const events = Array.isArray(record.data?.calendarEvents) ? record.data.calendarEvents : Array.isArray(record.data?.motivation?.calendarEvents) ? record.data.motivation.calendarEvents : [];
       calendarEventCount += events.length;
       reminderConfiguredCount += events.filter(event => event?.reminder !== -1 && event?.reminder !== '-1' && event?.reminder != null).length;
       if (eventDiagnostics.length < 10) eventDiagnostics.push(...events.slice(0, 10 - eventDiagnostics.length).map(event => ({ date: event?.date || '', time: event?.time || '', reminder: event?.reminder ?? null, kind: event?.kind || '' })));

@@ -6,6 +6,8 @@
   let enabled = false;
   let busy = false;
   let publicKey = '';
+  let refreshId = 0;
+  let verificationError = false;
   fetch('/api/push-config', { cache: 'no-store' })
     .then(response => response.ok ? response.json() : null)
     .then(config => { publicKey = config?.publicKey || ''; updateButton(); })
@@ -19,14 +21,15 @@
     if (!button || !status) return;
     const user = currentUser();
     button.disabled = busy || !user || !supported() || (!enabled && !publicKey);
-    button.textContent = busy ? '알림 설정 중…' : enabled ? '푸시 알림 끄기' : '사이트를 닫아도 알림 받기';
+    button.textContent = busy ? '알림 설정 중…' : enabled ? '알림 끄기' : '알림 받기';
     status.textContent = !supported() ? '이 브라우저는 푸시 알림을 지원하지 않아요.' :
       !user ? '로그인 후 서버 알림을 사용할 수 있어요.' :
       Notification.permission === 'denied' ? '브라우저 설정에서 알림을 허용해 주세요.' :
+      verificationError ? '서버의 알림 등록 상태를 확인하지 못했어요. 알림 받기를 다시 눌러 주세요.' :
       enabled ? '이 기기에 일정 알림을 보냅니다.' :
       !publicKey ? '지금은 사이트를 열어 둔 동안만 알림을 받을 수 있어요.' :
-      localStorage.getItem(disabledKey(user)) ? '알림이 꺼져 있어요. 다시 받으려면 알림 켜기를 누르세요.' :
-      '알림이 있는 일정을 저장하면 이 기기에서 알림을 켭니다.';
+      localStorage.getItem(disabledKey(user)) ? '알림이 꺼져 있어요. 다시 받으려면 알림 받기를 누르세요.' :
+      '버튼을 눌러 이 기기의 푸시 알림을 켜세요.';
   }
 
   function decodeKey(value) {
@@ -40,19 +43,29 @@
   }
 
   async function refresh() {
+    const requestId = ++refreshId;
     enabled = false;
+    verificationError = false;
     const user = currentUser();
-    if (!supported()) { window.lifeosPushEnabled = false; updateButton(); return; }
+    if (!user || !supported()) { window.lifeosPushEnabled = false; updateButton(); return; }
     try {
       const reg = await registration();
-      const subscription = await reg.pushManager.getSubscription();
-      if (subscription && localStorage.getItem(ownerKey) && localStorage.getItem(ownerKey) !== user?.id) {
+      let subscription = await reg.pushManager.getSubscription();
+      if (requestId !== refreshId || currentUser()?.id !== user.id) return;
+      if (subscription && localStorage.getItem(ownerKey) && localStorage.getItem(ownerKey) !== user.id) {
         await subscription.unsubscribe();
         localStorage.removeItem(ownerKey);
+        subscription = null;
       }
-      if (!user) { window.lifeosPushEnabled = false; updateButton(); return; }
       enabled = !!subscription && localStorage.getItem(ownerKey) === user.id;
-    } catch (error) { console.warn('푸시 상태 확인 실패', error); }
+      if (enabled && window.lifeosSupabase) {
+        const { data, error } = await window.lifeosSupabase.from('calendar_push_subscriptions').select('id')
+          .eq('user_id', user.id).eq('endpoint', subscription.endpoint).limit(1).maybeSingle();
+        if (error) throw error;
+        enabled = !!data;
+      }
+    } catch (error) { console.warn('푸시 상태 확인 실패', error); verificationError = true; enabled = false; }
+    if (requestId !== refreshId || currentUser()?.id !== user.id) return;
     window.lifeosPushEnabled = enabled;
     updateButton();
   }
@@ -81,6 +94,7 @@
     if (error) throw error;
     localStorage.setItem(ownerKey, user.id);
     localStorage.removeItem(disabledKey(user));
+    verificationError = false;
     enabled = true;
     window.lifeosPushEnabled = true;
   }
@@ -99,6 +113,7 @@
     }
     localStorage.removeItem(ownerKey);
     if (user) localStorage.setItem(disabledKey(user), '1');
+    verificationError = false;
     enabled = false;
     window.lifeosPushEnabled = false;
   }

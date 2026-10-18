@@ -14,7 +14,7 @@ calendarEventDialog.innerHTML=`<form id="calendar-event-form">
     <label>알림<select name="reminder"><option value="-1">알림 없음</option><option value="day">당일 오전 9시 (시간 없는 일정도 가능)</option><option value="0">정해진 시간에</option><option value="5">5분 전</option><option value="15">15분 전</option><option value="60">1시간 전</option><option value="1440">하루 전</option></select></label>
     <label>메모<textarea name="notes" maxlength="1000" placeholder="장소나 준비할 내용을 적어 두세요."></textarea></label>
   </div>
-  <p class="muted calendar-reminder-help">당일 오전 9시 알림은 시간 없이도 설정할 수 있어요. 알림이 있는 일정을 저장하면 이 기기의 알림 허용을 확인합니다.</p>
+  <p class="muted calendar-reminder-help">당일 오전 9시 알림은 시간 없이도 설정할 수 있어요. 사이트를 닫아도 알림을 받으려면 캘린더의 ‘알림 받기’를 켜세요.</p>
   <div class="modal-actions"><button type="button" class="outline" data-calendar-close>취소</button><button type="submit" class="primary">저장</button></div>
 </form>`;
 document.body.append(calendarEventDialog);
@@ -69,7 +69,12 @@ function calendarSearchEventDate(item){
   }
   return null;
 }
-async function calendarSaveEvents(){Repository.save();try{if(remoteUser)await syncCategoriesToSupabase()}catch(error){console.warn('캘린더 Supabase 동기화 실패',error)}render()}
+async function calendarSaveEvents(){
+  Repository.save();
+  const synced=!remoteUser||await syncCategoriesToSupabase();
+  render();
+  return synced;
+}
 function calendarRepeatVisibility(){
   const label=calendarEventDialog.querySelector('.calendar-repeat-end');
   label.hidden=calendarEventDialog.querySelector('[name="repeat"]').value==='none';
@@ -131,10 +136,7 @@ function calendarMoneyAgenda(date){
 }
 function calendarAgendaView(date){
   const events=calendarEventsForDay(date);
-  const permission='Notification' in window?Notification.permission:'unsupported';
-  const label=permission==='granted'?'알림 허용됨':permission==='denied'?'알림 차단됨':permission==='unsupported'?'알림 미지원':'알림 권한 허용';
-  const help=permission==='granted'?'사이트를 열어둔 동안 설정한 시간에 일정 알림이 표시돼요.':permission==='denied'?'브라우저의 사이트 설정에서 알림을 허용해 주세요.':permission==='unsupported'?'이 브라우저에서는 알림을 사용할 수 없어요.':'버튼을 눌러 이 사이트의 알림을 허용해 주세요.';
-  return `<section class="card calendar-agenda"><div class="card-head"><div><h2>${date.replaceAll('-','.')} 일정·할 일</h2><p class="muted">이 날짜의 일정과 반복 일정을 관리하세요.</p></div><div class="calendar-agenda-add"><button class="outline" data-calendar-add="event">＋ 일정</button><button class="outline" data-calendar-add="task">＋ 할 일</button></div></div><div class="calendar-notification-controls"><button type="button" class="outline" data-calendar-notification-permission ${permission==='default'?'':'disabled'}>${label}</button><span class="muted" role="status">${help}</span></div>${events.length?`<div class="calendar-agenda-list">${events.map(item=>calendarEventRow(item,date)).join('')}</div>`:'<p class="empty">이 날짜에 등록한 일정이나 할 일이 없어요.</p>'}${calendarMoneyAgenda(date)}</section>`;
+  return `<section class="card calendar-agenda"><div class="card-head"><div><h2>${date.replaceAll('-','.')} 일정·할 일</h2><p class="muted">이 날짜의 일정과 반복 일정을 관리하세요.</p></div><div class="calendar-agenda-add"><button class="outline" data-calendar-add="event">＋ 일정</button><button class="outline" data-calendar-add="task">＋ 할 일</button></div></div><div class="calendar-notification-controls"><button type="button" class="outline" data-calendar-push-toggle>알림 받기</button><span class="muted" data-calendar-push-status role="status">푸시 알림 상태를 확인하는 중이에요.</span></div>${events.length?`<div class="calendar-agenda-list">${events.map(item=>calendarEventRow(item,date)).join('')}</div>`:'<p class="empty">이 날짜에 등록한 일정이나 할 일이 없어요.</p>'}${calendarMoneyAgenda(date)}</section>`;
 }
 function calendarUpcomingView(date){
   const rows=[];
@@ -211,13 +213,6 @@ calendarDeleteDialog.addEventListener('click',event=>{
   }
 });
 document.addEventListener('click',event=>{
-  if(event.target.closest('[data-calendar-notification-permission]')){
-    if('Notification' in window&&Notification.permission==='default'){
-      try{Promise.resolve(Notification.requestPermission()).then(permission=>{render();if(permission==='granted')calendarCheckReminders()}).catch(error=>{console.warn('알림 권한 요청 실패',error);toast('알림 권한을 요청하지 못했어요.')})}
-      catch(error){console.warn('알림 권한 요청 실패',error);toast('알림 권한을 요청하지 못했어요.')}
-    }
-    return;
-  }
   if(event.target.closest('[data-calendar-today-close]')){calendarTodayDialog.close();return}
   if(event.target.closest('[data-calendar-today]')){setDate(dateKey(new Date()));return}
   const jump=event.target.closest('[data-calendar-jump]');if(jump){setDate(jump.dataset.calendarJump);return}
@@ -240,12 +235,9 @@ calendarEventDialog.querySelector('form').addEventListener('submit',async event=
   const item={id:old?.id||`ce-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,kind:values.kind,title,date,time:values.time||'',endTime:'',repeat:values.repeat,repeatEnd:values.repeat==='none'?'':repeatEnd,reminder,notes:String(values.notes||'').trim(),doneDates:old?.doneDates||[],excludedDates:old?.excludedDates||[]};
   if(old)Object.assign(old,item);else list.push(item);
   calendarEventDialog.close();
-  if(reminder!==-1&&'Notification' in window&&Notification.permission==='default'){
-    try{Promise.resolve(Notification.requestPermission()).then(permission=>{if(permission==='granted')calendarCheckReminders()}).catch(()=>{})}catch{}
-  }
-  await calendarSaveEvents();
+  const synced=await calendarSaveEvents();
   calendarCheckReminders();
-  toast(old?'일정을 수정했어요.':'일정을 저장했어요.');
+  toast(synced?(old?'일정을 수정했어요.':'일정을 저장했어요.'):'이 브라우저에만 저장됐어요. 서버 저장에 실패해 푸시 알림을 보낼 수 없어요.');
 });
 const calendarReminderInFlight=new Set();
 async function calendarCheckReminders(){
