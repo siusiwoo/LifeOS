@@ -131,7 +131,10 @@ function calendarMoneyAgenda(date){
 }
 function calendarAgendaView(date){
   const events=calendarEventsForDay(date);
-  return `<section class="card calendar-agenda"><div class="card-head"><div><h2>${date.replaceAll('-','.')} 일정·할 일</h2><p class="muted">이 날짜의 일정과 반복 일정을 관리하세요.</p></div><div class="calendar-agenda-add"><button class="outline" data-calendar-add="event">＋ 일정</button><button class="outline" data-calendar-add="task">＋ 할 일</button></div></div>${events.length?`<div class="calendar-agenda-list">${events.map(item=>calendarEventRow(item,date)).join('')}</div>`:'<p class="empty">이 날짜에 등록한 일정이나 할 일이 없어요.</p>'}${calendarMoneyAgenda(date)}</section>`;
+  const permission='Notification' in window?Notification.permission:'unsupported';
+  const label=permission==='granted'?'알림 허용됨':permission==='denied'?'알림 차단됨':permission==='unsupported'?'알림 미지원':'알림 권한 허용';
+  const help=permission==='granted'?'사이트를 열어둔 동안 설정한 시간에 일정 알림이 표시돼요.':permission==='denied'?'브라우저의 사이트 설정에서 알림을 허용해 주세요.':permission==='unsupported'?'이 브라우저에서는 알림을 사용할 수 없어요.':'버튼을 눌러 이 사이트의 알림을 허용해 주세요.';
+  return `<section class="card calendar-agenda"><div class="card-head"><div><h2>${date.replaceAll('-','.')} 일정·할 일</h2><p class="muted">이 날짜의 일정과 반복 일정을 관리하세요.</p></div><div class="calendar-agenda-add"><button class="outline" data-calendar-add="event">＋ 일정</button><button class="outline" data-calendar-add="task">＋ 할 일</button></div></div><div class="calendar-notification-controls"><button type="button" class="outline" data-calendar-notification-permission ${permission==='default'?'':'disabled'}>${label}</button><span class="muted" role="status">${help}</span></div>${events.length?`<div class="calendar-agenda-list">${events.map(item=>calendarEventRow(item,date)).join('')}</div>`:'<p class="empty">이 날짜에 등록한 일정이나 할 일이 없어요.</p>'}${calendarMoneyAgenda(date)}</section>`;
 }
 function calendarUpcomingView(date){
   const rows=[];
@@ -208,6 +211,13 @@ calendarDeleteDialog.addEventListener('click',event=>{
   }
 });
 document.addEventListener('click',event=>{
+  if(event.target.closest('[data-calendar-notification-permission]')){
+    if('Notification' in window&&Notification.permission==='default'){
+      try{Promise.resolve(Notification.requestPermission()).then(permission=>{render();if(permission==='granted')calendarCheckReminders()}).catch(error=>{console.warn('알림 권한 요청 실패',error);toast('알림 권한을 요청하지 못했어요.')})}
+      catch(error){console.warn('알림 권한 요청 실패',error);toast('알림 권한을 요청하지 못했어요.')}
+    }
+    return;
+  }
   if(event.target.closest('[data-calendar-today-close]')){calendarTodayDialog.close();return}
   if(event.target.closest('[data-calendar-today]')){setDate(dateKey(new Date()));return}
   const jump=event.target.closest('[data-calendar-jump]');if(jump){setDate(jump.dataset.calendarJump);return}
@@ -230,29 +240,26 @@ calendarEventDialog.querySelector('form').addEventListener('submit',async event=
   const item={id:old?.id||`ce-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,kind:values.kind,title,date,time:values.time||'',endTime:'',repeat:values.repeat,repeatEnd:values.repeat==='none'?'':repeatEnd,reminder,notes:String(values.notes||'').trim(),doneDates:old?.doneDates||[],excludedDates:old?.excludedDates||[]};
   if(old)Object.assign(old,item);else list.push(item);
   calendarEventDialog.close();
-  await calendarSaveEvents();
-  if(reminder!==-1){
-    const pushRequested=window.lifeosEnablePushFromCalendar?.()===true;
-    if(!pushRequested&&'Notification' in window&&Notification.permission==='default'){
-      try{Promise.resolve(Notification.requestPermission()).catch(()=>{})}catch{}
-    }
+  if(reminder!==-1&&'Notification' in window&&Notification.permission==='default'){
+    try{Promise.resolve(Notification.requestPermission()).then(permission=>{if(permission==='granted')calendarCheckReminders()}).catch(()=>{})}catch{}
   }
+  await calendarSaveEvents();
+  calendarCheckReminders();
   toast(old?'일정을 수정했어요.':'일정을 저장했어요.');
 });
 const calendarReminderInFlight=new Set();
 async function calendarCheckReminders(){
-  if(window.lifeosCurrentUser&&localStorage.getItem(`lifeos.push.disabled.v1.${window.lifeosCurrentUser.id}`))return;
-  if(window.lifeosPushEnabled||window.lifeosCurrentUser&&localStorage.getItem('lifeos.push.owner.v1')===window.lifeosCurrentUser.id)return;
   if(!('Notification' in window)||Notification.permission!=='granted')return;
   const now=new Date(),today=dateKey(now),tomorrow=shift(today,1),sentKey='lifeos.calendar.sent.v1';
   let sent={};try{sent=JSON.parse(localStorage.getItem(sentKey)||'{}')}catch{}
   let dirty=false;
   for(const date of [today,tomorrow])for(const item of calendarEventsForDay(date)){
     const dayReminder=item.reminder==='day';
-    if((!item.time&&!dayReminder)||item.reminder===-1||item.kind==='task'&&(item.doneDates||[]).includes(date))continue;
+    if((!item.time&&!dayReminder)||item.reminder==null||String(item.reminder)==='-1'||item.kind==='task'&&(item.doneDates||[]).includes(date))continue;
     const when=new Date(`${date}T${dayReminder?'09:00':item.time}:00`).getTime()-(dayReminder?0:Number(item.reminder)*60000);
+    if(!Number.isFinite(when))continue;
     const key=`${item.id}|${date}|${item.reminder}`;
-    if(!sent[key]&&!calendarReminderInFlight.has(key)&&now.getTime()>=when&&(dayReminder?dateKey(now)===date:now.getTime()<when+600000)){
+    if(!sent[key]&&!calendarReminderInFlight.has(key)&&now.getTime()>=when&&now.getTime()<when+600000){
       calendarReminderInFlight.add(key);
       const options={body:`${date} ${item.time||'종일'} · ${item.kind==='task'?'할 일':'일정'}`,tag:key,icon:'/outputs/lifeos-leaf-icon.png',data:{url:'/'}};
       try{
