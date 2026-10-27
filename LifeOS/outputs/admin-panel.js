@@ -1,10 +1,10 @@
-// 관리자 패널: 관리자 계정으로 로그인했을 때만 Settings 화면에 표시됩니다.
-// 컴퓨터에서는 설정 카드 오른쪽, 휴대폰에서는 설정 카드 아래쪽에 나옵니다.
+// 관리자 패널: 관리자 계정으로 로그인했을 때만 Settings의 화면 설정 드롭다운에 "설정" 항목이 생깁니다.
+// 그 항목을 고르면 컴퓨터에서는 설정 카드 오른쪽, 휴대폰에서는 설정 카드 아래쪽에 패널이 열립니다.
 // 실제 데이터는 서버(/api/admin-overview)가 관리자 여부를 다시 확인한 뒤에만 내려줍니다.
 (() => {
   const ADMIN_EMAILS = ['shshw3388@gmail.com'];
   const DAYS_PAGE = 20;
-  const panel = { users: null, loading: false, error: '', query: '', selectedId: '', days: null, daysLoading: false, daysError: '', daysShown: DAYS_PAGE };
+  const panel = { open: false, users: null, loading: false, error: '', query: '', selectedId: '', days: null, daysLoading: false, daysError: '', daysShown: DAYS_PAGE };
 
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   const won = value => `${Number(value || 0).toLocaleString('ko-KR')}원`;
@@ -102,7 +102,30 @@
     if (box) box.innerHTML = panelMarkup();
   }
 
+  // 화면 설정 드롭다운(Gray/Dark) 목록 맨 아래에 "설정" 항목을 넣습니다.
+  // 고르면 패널이 열리고(다시 고르면 닫힘), 드롭다운은 원래 색감 값으로 돌아갑니다.
+  function addThemeOption() {
+    const select = document.querySelector('#content > .view #settings-theme');
+    if (!select) return;
+    let option = select.querySelector('option[value="__admin__"]');
+    if (!option) {
+      option = document.createElement('option');
+      option.value = '__admin__';
+      select.append(option);
+    }
+    option.textContent = panel.open ? '설정 닫기' : '설정';
+  }
+
+  function unmount() {
+    const layout = document.querySelector('.settings-admin-layout');
+    if (!layout) return;
+    const card = layout.querySelector('.settings-card');
+    if (card) layout.replaceWith(card); else layout.remove();
+  }
+
   function mount() {
+    addThemeOption();
+    if (!panel.open) return;
     const view = document.querySelector('#content > .view');
     const card = view?.querySelector('.settings-card');
     if (!view || !card || view.querySelector('#admin-panel')) return;
@@ -128,9 +151,22 @@
   }
 
   window.addEventListener('lifeos-auth', () => {
-    if (!isAdmin()) { panel.users = null; panel.selectedId = ''; panel.days = null; panel.error = ''; }
+    if (!isAdmin()) { panel.open = false; panel.users = null; panel.selectedId = ''; panel.days = null; panel.error = ''; }
     try { if (state.view === 'settings') render(); } catch {}
   });
+
+  // 캡처 단계에서 먼저 받아서, "설정"을 골랐을 때 기존 색감 변경 코드가 실행되지 않게 막습니다.
+  document.addEventListener('change', event => {
+    const select = event.target;
+    if (select?.id !== 'settings-theme' || select.value !== '__admin__') return;
+    event.stopImmediatePropagation();
+    select.value = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'gray';
+    if (!isAdmin()) return;
+    panel.open = !panel.open;
+    addThemeOption();
+    if (panel.open) { mount(); if (window.innerWidth <= 1100) document.querySelector('#admin-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    else unmount();
+  }, true);
 
   document.addEventListener('click', event => {
     if (!event.target.closest('#admin-panel')) return;
