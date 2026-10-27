@@ -48,6 +48,14 @@
     {
       "source": "/page-shortcuts.js",
       "destination": "/outputs/page-shortcuts.js"
+    },
+    {
+      "source": "/admin-panel.js",
+      "destination": "/outputs/admin-panel.js"
+    },
+    {
+      "source": "/admin-panel.css",
+      "destination": "/outputs/admin-panel.css"
     }
   ],
   "outputDirectory": "."
