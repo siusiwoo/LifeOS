@@ -186,7 +186,7 @@ function calendarOpenDelete(id,date){
   const repeating=item.repeat&&item.repeat!=='none';
   calendarDeleteDialog.dataset.id=id;
   calendarDeleteDialog.dataset.date=date;
-  calendarDeleteDialog.innerHTML=`<div class="modal-head"><h2 id="calendar-delete-title">일정 삭제</h2><button type="button" data-calendar-delete-close aria-label="닫기">✕</button></div><p><strong>${esc(item.title)}</strong> · ${esc(date)}</p><p class="muted calendar-delete-help">${repeating?'반복 일정입니다. 이 날짜만 지우거나 반복 전체를 지울 수 있어요.':'이 일정을 삭제할까요?'}</p><div class="modal-actions"><button type="button" class="outline" data-calendar-delete-close>취소</button>${repeating?'<button type="button" class="outline" data-calendar-delete-one>이 날짜만 삭제</button>':''}<button type="button" class="primary" data-calendar-delete-all>${repeating?'반복 전체 삭제':'삭제'}</button></div>`;
+  calendarDeleteDialog.innerHTML=`<div class="modal-head"><h2 id="calendar-delete-title">일정 삭제</h2><button type="button" data-calendar-delete-close aria-label="닫기">✕</button></div><p><strong>${esc(item.title)}</strong> · ${esc(date)}</p><p class="muted calendar-delete-help">${repeating?'반복 일정입니다. 이 날짜만, 이 날짜부터 끝까지, 또는 반복 전체를 지울 수 있어요.':'이 일정을 삭제할까요?'}</p><div class="modal-actions"><button type="button" class="outline" data-calendar-delete-close>취소</button>${repeating?'<button type="button" class="outline" data-calendar-delete-one>이 날짜만 삭제</button><button type="button" class="outline" data-calendar-delete-after>이 날짜부터 끝까지 삭제</button>':''}<button type="button" class="primary" data-calendar-delete-all>${repeating?'반복 전체 삭제':'삭제'}</button></div>`;
   calendarDeleteDialog.showModal();
 }
 calendarDeleteDialog.addEventListener('click',event=>{
@@ -201,6 +201,23 @@ calendarDeleteDialog.addEventListener('click',event=>{
     calendarDeleteDialog.close();
     calendarSaveEvents();
     toast('이 날짜의 일정만 삭제했어요.');
+    return;
+  }
+  if(event.target.closest('[data-calendar-delete-after]')){
+    const date=calendarDeleteDialog.dataset.date;
+    if(!validDate(date))return;
+    if(date<=item.date){
+      const events=calendarEvents(),index=events.findIndex(entry=>entry.id===item.id);
+      if(index>=0)events.splice(index,1);
+    }else{
+      const end=shift(date,-1);
+      item.repeatEnd=end;
+      if(Array.isArray(item.excludedDates))item.excludedDates=item.excludedDates.filter(value=>value<=end);
+      if(Array.isArray(item.doneDates))item.doneDates=item.doneDates.filter(value=>value<=end);
+    }
+    calendarDeleteDialog.close();
+    calendarSaveEvents();
+    toast('이 날짜부터 끝까지 일정을 삭제했어요.');
     return;
   }
   if(event.target.closest('[data-calendar-delete-all]')){
