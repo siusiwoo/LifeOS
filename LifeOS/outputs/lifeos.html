@@ -567,6 +567,70 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
   });
 })();
 </script>
+<script>
+// 기간(반복)으로 만든 할 일 삭제: "이 날짜만" 또는 "이 날짜부터 끝까지" 선택
+(() => {
+  const baseRemove = removeRecord;
+  const dialog = document.createElement('dialog');
+  dialog.className = 'calendar-event-dialog calendar-delete-dialog';
+  dialog.setAttribute('aria-labelledby', 'work-delete-title');
+  document.body.append(dialog);
+  let target = null;
+
+  const baseIdOf = (record, date) => {
+    const suffix = `-${date}`;
+    return record.id.endsWith(suffix) && record.recurrenceStart !== date ? record.id.slice(0, -suffix.length) : record.id;
+  };
+  const sameSeries = (item, baseId, date) => item.id === baseId || item.id === `${baseId}-${date}`;
+
+  function deleteFrom(record, date) {
+    const baseId = baseIdOf(record, date);
+    const dates = Object.keys(Repository.data.days || {}).filter(day => day >= date).sort();
+    let count = 0;
+    dates.forEach(day => {
+      (Repository.data.days[day]?.work || []).filter(item => sameSeries(item, baseId, day)).forEach(item => {
+        Repository.remove(day, 'work', item.id);
+        count++;
+      });
+    });
+    const end = shift(date, -1);
+    Object.keys(Repository.data.days || {}).filter(day => day < date).forEach(day => {
+      const list = Repository.data.days[day]?.work || [];
+      let changed = false;
+      list.forEach(item => {
+        if (sameSeries(item, baseId, day) && item.recurrenceType === 'recurring') { item.recurrenceEnd = end; changed = true; }
+      });
+      if (changed) Repository.upsert(day, 'work', list.find(item => sameSeries(item, baseId, day)));
+    });
+    return count;
+  }
+
+  removeRecord = function (kind, id) {
+    if (kind !== 'work') return baseRemove(kind, id);
+    const record = (Repository.getDay(state.date).work || []).find(item => item.id === id);
+    if (!record || record.recurrenceType !== 'recurring') return baseRemove(kind, id);
+    target = { record, date: state.date };
+    const range = record.recurrenceStart && record.recurrenceEnd ? `${record.recurrenceStart} ~ ${record.recurrenceEnd}` : '';
+    dialog.innerHTML = `<div class="modal-head"><h2 id="work-delete-title">할 일 삭제</h2><button type="button" data-work-delete-close aria-label="닫기">✕</button></div><p><strong>${esc(record.title)}</strong> · ${esc(state.date)}</p><p class="muted calendar-delete-help">기간으로 만든 할 일이에요${range ? ` (${esc(range)})` : ''}. 이 날짜만 지우거나, 이 날짜부터 끝까지 지울 수 있어요.</p><div class="modal-actions"><button type="button" class="outline" data-work-delete-close>취소</button><button type="button" class="outline" data-work-delete-one>이 날짜만 삭제</button><button type="button" class="primary" data-work-delete-after>이 날짜부터 끝까지 삭제</button></div>`;
+    dialog.showModal();
+  };
+
+  dialog.addEventListener('click', event => {
+    if (event.target.closest('[data-work-delete-close]')) { dialog.close(); return; }
+    if (!target) return;
+    if (event.target.closest('[data-work-delete-one]')) {
+      Repository.remove(target.date, 'work', target.record.id);
+      dialog.close(); render(); toast('이 날짜의 할 일만 삭제했어요.');
+      return;
+    }
+    if (event.target.closest('[data-work-delete-after]')) {
+      const count = deleteFrom(target.record, target.date);
+      dialog.close(); render(); toast(`이 날짜부터 끝까지 ${count}개의 할 일을 삭제했어요.`);
+    }
+  });
+  dialog.addEventListener('close', () => { target = null; });
+})();
+</script>
 <script src="./admin-panel.js?v=20261027-admin-select"></script>
 </body>
 </html>
