@@ -342,7 +342,7 @@ function lastWorkCategory(){
   return '프로젝트';
 }
 function rememberWorkCategory(category){try{localStorage.setItem(workCategoryStorageKey(),category)}catch{}}
-function fields(kind,record={}){if(kind==='note'){$('#dynamic-fields').innerHTML=`<label>메모 제목<input name="title" required maxlength="100" value="${esc(record.title||'')}" placeholder="메모 제목"></label><label>메모 본문<textarea name="body" maxlength="2000" placeholder="내용을 적어 보세요.">${esc(record.body||'')}</textarea></label>`;return}if(kind==='reflection'){$('#dynamic-fields').innerHTML=`<label>오늘의 한 줄<textarea name="title" required maxlength="500">${esc(record.title||'')}</textarea></label>`;return}let html=`<label>${kind==='work'?'업무 이름':kind==='expense'?'소비 내용':'수입 내용'}<input name="title" required maxlength="100" value="${esc(record.title||'')}" placeholder="내용을 입력하세요"></label>`;if(kind==='work'){const recurring=record.recurrenceType==='recurring';html+=`<label>카테고리<input name="category" maxlength="30" required value="${esc(record.category||lastWorkCategory())}"></label><label>예정 시간<input name="time" type="time" value="${esc(record.time||'')}"></label><label>반복 방식<select name="recurrenceType"><option value="once" ${!recurring?'selected':''}>일회성</option><option value="recurring" ${recurring?'selected':''}>지속적</option></select></label><label class="recurrence-end-field" style="display:${recurring?'grid':'none'}">반복 종료일<input name="recurrenceEnd" type="date" min="${esc(state.date)}" value="${esc(record.recurrenceEnd||shift(state.date,6))}"><small>시작일을 포함해 이 날짜까지 매일 업무가 생겨요.</small></label>`}if(kind==='expense'||kind==='income')html+=`<label>금액 (원)<input name="amount" type="number" min="0" max="999999999999" required value="${record.amount??''}" placeholder="0"></label>`;if(kind==='expense'){const selected=record.category||lastExpenseCategory();html+=`<label>소비 카테고리<select name="category">${expenseCategories.map(category=>`<option ${category===selected?'selected':''}>${category}</option>`).join('')}</select></label>`}$('#dynamic-fields').innerHTML=html;if(kind==='work'){const type=$('#dynamic-fields select[name="recurrenceType"]'),end=$('#dynamic-fields .recurrence-end-field'),input=end?.querySelector('input');const sync=()=>{const show=type.value==='recurring';end.style.display=show?'grid':'none';if(input)input.required=show};type.addEventListener('change',sync);sync()}}
+function fields(kind,record={}){if(kind==='note'){$('#dynamic-fields').innerHTML=`<label>메모 제목<input name="title" required maxlength="100" value="${esc(record.title||'')}" placeholder="메모 제목"></label><label>메모 본문<textarea name="body" maxlength="2000" placeholder="내용을 적어 보세요.">${esc(record.body||'')}</textarea></label>`;return}if(kind==='reflection'){$('#dynamic-fields').innerHTML=`<label>오늘의 한 줄<textarea name="title" required maxlength="500">${esc(record.title||'')}</textarea></label>`;return}let html=`<label>${kind==='work'?'업무 이름':kind==='expense'?'소비 내용':'수입 내용'}<input name="title" required maxlength="100" value="${esc(record.title||'')}" placeholder="내용을 입력하세요"></label>`;if(kind==='work'){const recurring=record.recurrenceType==='recurring';html+=`<label>카테고리<input name="category" maxlength="30" required value="${esc(record.category||lastWorkCategory())}"></label><label>예정 시간<input name="time" type="time" value="${esc(record.time||'')}"></label><label>반복 방식<select name="recurrenceType"><option value="once" ${!recurring?'selected':''}>일회성</option><option value="recurring" ${recurring?'selected':''}>지속적</option></select></label><label class="recurrence-end-field" style="display:${recurring?'grid':'none'}">반복 종료일<input name="recurrenceEnd" type="date" min="${esc(state.date)}" value="${esc(record.recurrenceEnd||shift(state.date,6))}"><small>시작일부터 이 날짜까지, 아래에서 고른 요일에만 업무가 생겨요.</small></label><div class="recurrence-days-field" style="display:${recurring?'grid':'none'}"><span>반복 요일</span><div class="recurrence-days">${['일','월','화','수','목','금','토'].map((name,index)=>`<label class="recurrence-day"><input type="checkbox" name="recurrenceDays" value="${index}" ${(Array.isArray(record.recurrenceDays)?record.recurrenceDays.includes(index):true)?'checked':''}><span>${name}</span></label>`).join('')}</div></div>`}if(kind==='expense'||kind==='income')html+=`<label>금액 (원)<input name="amount" type="number" min="0" max="999999999999" required value="${record.amount??''}" placeholder="0"></label>`;if(kind==='expense'){const selected=record.category||lastExpenseCategory();html+=`<label>소비 카테고리<select name="category">${expenseCategories.map(category=>`<option ${category===selected?'selected':''}>${category}</option>`).join('')}</select></label>`}$('#dynamic-fields').innerHTML=html;if(kind==='work'){const type=$('#dynamic-fields select[name="recurrenceType"]'),end=$('#dynamic-fields .recurrence-end-field'),input=end?.querySelector('input');const sync=()=>{const show=type.value==='recurring';end.style.display=show?'grid':'none';const daysField=$('#dynamic-fields .recurrence-days-field');if(daysField)daysField.style.display=show?'grid':'none';if(input)input.required=show};type.addEventListener('change',sync);sync()}}
 function openRecord(kind='work',id=null){const day=Repository.getDay(state.date);let record=kind==='reflection'?{title:day.reflection}:id?day[collection(kind)].find(r=>r.id===id):{};if(!record)return;state.editing={date:state.date,kind,id,record};$('#dialog-title').textContent=kind==='reflection'?'오늘의 한 줄':id?'기록 수정':'기록 추가';$('#dialog-date').textContent=`${state.date}에 남기는 기록`;$('#record-kind').value=kind;$('#record-kind').disabled=!!id||kind==='reflection';fields(kind,record);$('#record-dialog').showModal()}
 function closeDialog(){$('#record-dialog').close();state.editing=null}
 function removeRecord(kind,id){if(!kind)return;if(!window.confirm('이 기록을 삭제할까요?'))return;Repository.remove(state.date,kind,id);render();toast('기록을 삭제했어요.')}
@@ -352,7 +352,7 @@ $('#record-kind').onchange=e=>{state.editing.kind=e.target.value;const r=e.targe
 $('#work-shortcut-trigger').addEventListener('click',()=>{const panel=$('#work-shortcut-list'),opening=panel.hidden;panel.hidden=!opening;$('#work-shortcut-trigger').setAttribute('aria-expanded',String(opening))});
 document.addEventListener('click',event=>{if(event.target.closest('#work-shortcut'))return;$('#work-shortcut-list').hidden=true;$('#work-shortcut-trigger').setAttribute('aria-expanded','false')});
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('#work-shortcut-list').hidden){$('#work-shortcut-list').hidden=true;$('#work-shortcut-trigger').setAttribute('aria-expanded','false');$('#work-shortcut-trigger').focus()}});
-$('#record-form').onsubmit=event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.target)),edit=state.editing,kind=edit.kind,title=(values.title||'').trim();if(!title){toast('내용을 입력해 주세요.');return}const record={id:edit.id||`r-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,title};if(kind==='note'){record.body=(values.body||'').trim();record.createdAt=edit.record.createdAt||state.date}if(kind==='work'){const recurring=values.recurrenceType==='recurring',end=values.recurrenceEnd||edit.date;if(recurring&&!validDate(end)){toast('반복 종료일을 선택해 주세요.');return}if(recurring&&end<edit.date){toast('반복 종료일은 시작일 이후로 선택해 주세요.');return}Object.assign(record,{...(edit.record.review?{review:edit.record.review}:{}),category:values.category?.trim()||'프로젝트',time:values.time||'',recurrenceType:recurring?'recurring':'once',...(recurring?{recurrenceStart:edit.date,recurrenceEnd:end}:{}) ,done:edit.record.done||false});if(!edit.id&&recurring){for(let cursor=edit.date;cursor<=end;cursor=shift(cursor,1)){Repository.upsert(cursor,'work',{...record,id:cursor===edit.date?record.id:`${record.id}-${cursor}`,done:false})}rememberWorkCategory(record.category);closeDialog();render();toast(storageAvailable?'지속적인 업무를 저장했어요.':'현재 화면에 업무를 반영했어요.');return}}if(kind==='expense'||kind==='income')record.amount=Number(values.amount);if(kind==='expense')record.category=values.category||'기타';Repository.upsert(edit.date,kind,record);if(kind==='work')rememberWorkCategory(record.category);if(kind==='expense')rememberExpenseCategory(record.category);closeDialog();render();toast(storageAvailable?'기록을 저장했어요.':'현재 화면에 기록을 반영했어요.')}
+$('#record-form').onsubmit=event=>{event.preventDefault();const values=Object.fromEntries(new FormData(event.target)),edit=state.editing,kind=edit.kind,title=(values.title||'').trim();if(!title){toast('내용을 입력해 주세요.');return}const record={id:edit.id||`r-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,title};if(kind==='note'){record.body=(values.body||'').trim();record.createdAt=edit.record.createdAt||state.date}if(kind==='work'){const recurring=values.recurrenceType==='recurring',end=values.recurrenceEnd||edit.date;if(recurring&&!validDate(end)){toast('반복 종료일을 선택해 주세요.');return}if(recurring&&end<edit.date){toast('반복 종료일은 시작일 이후로 선택해 주세요.');return}const recurrenceDays=[...document.querySelectorAll('#dynamic-fields [name="recurrenceDays"]:checked')].map(input=>Number(input.value));if(recurring&&!recurrenceDays.length){toast('반복할 요일을 하나 이상 골라 주세요.');return}if(recurring&&!edit.id){let found=false;for(let cursor=edit.date;cursor<=end&&!found;cursor=shift(cursor,1))found=recurrenceDays.includes(parseDate(cursor).getDay());if(!found){toast('기간 안에 고른 요일이 없어요.');return}}Object.assign(record,{...(edit.record.review?{review:edit.record.review}:{}),category:values.category?.trim()||'프로젝트',time:values.time||'',recurrenceType:recurring?'recurring':'once',...(recurring?{recurrenceStart:edit.date,recurrenceEnd:end,recurrenceDays}:{}) ,done:edit.record.done||false});if(!edit.id&&recurring){for(let cursor=edit.date;cursor<=end;cursor=shift(cursor,1)){if(!recurrenceDays.includes(parseDate(cursor).getDay()))continue;Repository.upsert(cursor,'work',{...record,id:cursor===edit.date?record.id:`${record.id}-${cursor}`,done:false})}rememberWorkCategory(record.category);closeDialog();render();toast(storageAvailable?'지속적인 업무를 저장했어요.':'현재 화면에 업무를 반영했어요.');return}}if(kind==='expense'||kind==='income')record.amount=Number(values.amount);if(kind==='expense')record.category=values.category||'기타';Repository.upsert(edit.date,kind,record);if(kind==='work')rememberWorkCategory(record.category);if(kind==='expense')rememberExpenseCategory(record.category);closeDialog();render();toast(storageAvailable?'기록을 저장했어요.':'현재 화면에 기록을 반영했어요.')}
 const noteOption=document.createElement('option');noteOption.value='note';noteOption.textContent='Work · 메모';$('#record-kind').insertBefore(noteOption,$('#record-kind').firstChild);Array.from($('#record-kind').options).forEach(option=>{if(option.value==='income')option.textContent='Money · 수입'});
 Repository.load();render();
 window.addEventListener('lifeos-auth', event => {
@@ -684,6 +684,100 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
   });
 })();
 </script>
+<style>
+  .dash-schedule-list{display:grid;gap:6px}
+  .dash-schedule-row{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--paper);color:var(--ink);text-align:left;font:inherit;cursor:pointer}
+  .dash-schedule-row:hover{background:var(--bg)}
+  .dash-schedule-row time{font-size:12px;font-weight:700;color:var(--green)}
+  .dash-schedule-row strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px}
+  .dash-schedule-row small{color:var(--muted);font-size:11px}
+  .dash-dday{font-size:11px;font-weight:700;color:var(--orange)}
+  .dash-habits{display:grid;gap:7px}
+  .dash-habit{display:flex;gap:9px;align-items:baseline;font-size:13px;line-height:1.5}
+  .dash-habit>span{color:#a34a45;font-weight:800;font-size:12px}
+  .dash-habit small{color:var(--muted)}
+  .dash-habit small b{color:var(--green);font-weight:600}
+  .dash-remind-alert{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:14px;padding:11px 13px;border-radius:11px;background:#f6e9e3;color:#7f3d39;font-size:12px}
+  .dash-remind-alert button{background:none;border:0;color:inherit;font:inherit;font-weight:700;cursor:pointer;white-space:nowrap}
+  .dash-empty{color:var(--muted);font-size:13px;padding:10px 0}
+</style>
+<script>
+// 대시보드 정리: 겹치는 숫자 카드 줄이고, 다가오는 일정·참을 습관 카드 추가
+(() => {
+  const HIDE = ['메모', '오늘 소비', '총 소비', '총수입'];
+  const baseStats = stats;
+  stats = function (day, view = state.view) {
+    const html = baseStats(day, view);
+    if (view !== 'dashboard') return html;
+    const box = document.createElement('div');
+    box.innerHTML = html;
+    box.querySelectorAll('.stat').forEach(stat => {
+      const label = (stat.querySelector('.stat-label')?.textContent || '').trim();
+      if (HIDE.some(name => label === name || label.startsWith(name + ' '))) stat.remove();
+    });
+    return box.innerHTML;
+  };
+
+  const dday = date => {
+    const diff = Math.round((parseDate(date) - parseDate(dateKey(new Date()))) / 86400000);
+    return diff === 0 ? '오늘' : diff > 0 ? `D-${diff}` : '';
+  };
+
+  function scheduleCard() {
+    if (typeof calendarEventsForDay !== 'function') return '';
+    const rows = [];
+    for (let offset = 0; offset < 7 && rows.length < 5; offset++) {
+      const date = shift(state.date, offset);
+      for (const item of calendarEventsForDay(date)) {
+        if (rows.length >= 5) break;
+        rows.push(`<button type="button" class="dash-schedule-row" data-dash-calendar="${date}"><time>${date.slice(5).replace('-', '.')}</time><span><strong>${esc(item.title)}</strong><br><small>${esc(item.time || '종일')} · ${item.kind === 'task' ? '할 일' : '일정'}</small></span><span class="dash-dday">${dday(date)}</span></button>`);
+      }
+    }
+    return `<section class="card dash-schedule-card"><div class="card-head"><div class="card-title"><span class="section-icon">${svg('calendar')}</span><h2>다가오는 일정</h2></div><button class="text-btn" data-view="calendar">캘린더 ↗</button></div><div class="dash-schedule-list">${rows.join('') || '<p class="dash-empty">7일 안에 등록된 일정이 없어요.</p>'}</div></section>`;
+  }
+
+  function habitRemindCard() {
+    const habits = Repository.data.motivation?.badHabits || [];
+    const yesterday = shift(state.date, -1);
+    const missed = yesterday < dateKey(new Date()) ? (Repository.getDay(yesterday).work || []).filter(r => !r.done && !r.review).length : 0;
+    const list = habits.slice(0, 4).map(h => `<div class="dash-habit"><span>✕</span><div>${esc(h.title)}${h.instead ? ` <small>→ <b>${esc(h.instead)}</b></small>` : ''}</div></div>`).join('');
+    return `<section class="card dash-habit-card"><div class="card-head"><div class="card-title"><span class="section-icon">${svg('review')}</span><h2>참을 습관</h2></div><button class="text-btn" data-view="review">remind ↗</button></div><div class="dash-habits">${list || '<p class="dash-empty">remind에서 없애고 싶은 습관을 적어 보세요.</p>'}</div>${missed ? `<div class="dash-remind-alert"><span>어제 못한 일 ${missed}개를 아직 돌아보지 않았어요.</span><button type="button" data-view="review">돌아보기 →</button></div>` : ''}</section>`;
+  }
+
+  const baseRender = render;
+  render = function () {
+    const result = baseRender.apply(this, arguments);
+    if (state.view === 'dashboard') {
+      // 순서: 해야 할 일 → 다가오는 일정 → 메모 → 참을 습관 → 오늘 소비 → 오늘의 한 줄
+      const grid = document.querySelector('#content > .view > .grid');
+      if (grid && !grid.querySelector('.dash-schedule-card')) {
+        const work = grid.children[0], memo = grid.querySelector('.memo-card');
+        work?.insertAdjacentHTML('afterend', scheduleCard());
+        (memo || grid.querySelector('.dash-schedule-card'))?.insertAdjacentHTML('afterend', habitRemindCard());
+      }
+    }
+    return result;
+  };
+
+  document.addEventListener('click', event => {
+    const row = event.target.closest('[data-dash-calendar]');
+    if (!row) return;
+    state.view = 'calendar';
+    setDate(row.dataset.dashCalendar);
+  });
+  render();
+})();
+</script>
+
+<style>
+  .recurrence-days-field{gap:8px;font-size:12px}
+  .recurrence-days{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+  .recurrence-day{position:relative;display:block;cursor:pointer}
+  .recurrence-day input{position:absolute;opacity:0;pointer-events:none}
+  .recurrence-day span{display:grid;place-items:center;height:36px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--muted);font-weight:600;font-size:13px;transition:.15s}
+  .recurrence-day input:checked+span{background:var(--green);border-color:var(--green);color:#fff}
+  .recurrence-day input:focus-visible+span{outline:2px solid var(--green);outline-offset:2px}
+</style>
 <script src="./admin-panel.js?v=20261027-admin-select"></script>
 </body>
 </html>
