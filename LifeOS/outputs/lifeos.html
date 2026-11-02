@@ -748,12 +748,12 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
   render = function () {
     const result = baseRender.apply(this, arguments);
     if (state.view === 'dashboard') {
-      // 순서: 해야 할 일 → 다가오는 일정 → 메모 → 참을 습관 → 오늘 소비 → 오늘의 한 줄
+      // 순서: 해야 할 일 → 메모 → 다가오는 일정 → 참을 습관 → 오늘 소비 → 오늘의 한 줄
       const grid = document.querySelector('#content > .view > .grid');
       if (grid && !grid.querySelector('.dash-schedule-card')) {
-        const work = grid.children[0], memo = grid.querySelector('.memo-card');
-        work?.insertAdjacentHTML('afterend', scheduleCard());
-        (memo || grid.querySelector('.dash-schedule-card'))?.insertAdjacentHTML('afterend', habitRemindCard());
+        const work = grid.children[0], memo = grid.querySelector('.memo-card') || work;
+        memo?.insertAdjacentHTML('afterend', scheduleCard());
+        grid.querySelector('.dash-schedule-card')?.insertAdjacentHTML('afterend', habitRemindCard());
       }
     }
     return result;
