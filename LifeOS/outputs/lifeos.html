@@ -631,6 +631,59 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
   dialog.addEventListener('close', () => { target = null; });
 })();
 </script>
+<style>
+  .habit-card .review-page-help{margin-bottom:14px}
+  .habit-form{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) auto;gap:8px;margin-bottom:14px}
+  .habit-form input{width:100%;border:1px solid var(--line);border-radius:10px;padding:11px 12px;background:var(--paper);color:var(--ink);font:inherit;min-width:0}
+  .habit-form .primary{padding:10px 16px;border-radius:10px;white-space:nowrap}
+  .habit-list{display:grid;gap:8px}
+  .habit-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;background:var(--paper);border:1px solid var(--line);border-radius:12px}
+  .habit-mark{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#f6e9e3;color:#a34a45;font-weight:800;font-size:13px}
+  .habit-body{display:grid;gap:3px;min-width:0}
+  .habit-body strong{overflow-wrap:anywhere}
+  .habit-body small{color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+  .habit-body small b{color:var(--green);font-weight:600}
+  @media(max-width:600px){.habit-form{grid-template-columns:minmax(0,1fr)}.habit-form .primary{justify-self:end}}
+</style>
+<script>
+// remind 화면: 없애고 싶은 안 좋은 습관 적기 (motivation 데이터에 저장 → Supabase 동기화)
+(() => {
+  const habits = () => { const m = Repository.data.motivation ||= {}; return Array.isArray(m.badHabits) ? m.badHabits : (m.badHabits = []); };
+  const persist = () => { Repository.save(); syncCategoriesToSupabase(); };
+
+  function habitCard() {
+    const list = habits();
+    const rows = list.map(habit => `<div class="habit-row"><span class="habit-mark" aria-hidden="true">✕</span><div class="habit-body"><strong>${esc(habit.title)}</strong>${habit.instead ? `<small>대신 → <b>${esc(habit.instead)}</b></small>` : ''}</div><button type="button" class="delete-inline" data-habit-remove="${esc(habit.id)}" aria-label="${esc(habit.title)} 삭제">×</button></div>`).join('');
+    return `<section class="card habit-card" aria-labelledby="habit-title"><div class="card-head"><div class="card-title"><span class="section-icon">${svg('review')}</span><h2 id="habit-title">없애고 싶은 습관</h2></div>${list.length ? `<span class="pill">${list.length}개</span>` : ''}</div><p class="review-page-help">고치고 싶은 습관과, 그 대신 할 행동을 적어 두고 매일 확인해 보세요.</p><form class="habit-form" data-habit-form><input name="title" maxlength="80" required placeholder="안 좋은 습관 (예: 자기 전 휴대폰 보기)" aria-label="안 좋은 습관"><input name="instead" maxlength="80" placeholder="대신 할 행동 (선택, 예: 책 10쪽 읽기)" aria-label="대신 할 행동"><button type="submit" class="primary">추가</button></form><div class="habit-list">${rows || '<div class="empty"><p>아직 적은 습관이 없어요.</p></div>'}</div></section>`;
+  }
+
+  const baseReviewPage = reviewPage;
+  reviewPage = function (day) {
+    return baseReviewPage(day).replace(/<\/div>$/, `${habitCard()}</div>`);
+  };
+
+  document.addEventListener('submit', event => {
+    const form = event.target.closest('[data-habit-form]');
+    if (!form) return;
+    event.preventDefault();
+    const title = form.elements.title.value.trim();
+    const instead = form.elements.instead.value.trim();
+    if (!title) return;
+    habits().push({ id: `habit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, title, instead, createdAt: dateKey(new Date()) });
+    persist(); render(); toast('습관을 적었어요.');
+    document.querySelector('[data-habit-form] [name="title"]')?.focus();
+  });
+
+  document.addEventListener('click', event => {
+    const button = event.target.closest('[data-habit-remove]');
+    if (!button) return;
+    const list = habits(), index = list.findIndex(item => item.id === button.dataset.habitRemove);
+    if (index < 0 || !window.confirm('이 습관을 목록에서 지울까요?')) return;
+    list.splice(index, 1);
+    persist(); render(); toast('습관을 지웠어요.');
+  });
+})();
+</script>
 <script src="./admin-panel.js?v=20261027-admin-select"></script>
 </body>
 </html>
