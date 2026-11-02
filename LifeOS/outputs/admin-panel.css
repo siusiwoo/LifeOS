@@ -50,6 +50,14 @@
 .admin-reflection{margin:0;font-size:13px;line-height:1.6;white-space:pre-wrap}
 .admin-empty{color:var(--muted);font-size:13px;padding:14px 0}
 .admin-error{color:#a34a45;font-size:13px;padding:14px 0}
+.admin-months{display:grid;gap:10px}
+.admin-month>summary{display:flex;align-items:baseline;gap:8px;padding:10px 2px;cursor:pointer;list-style:none;border-bottom:1px solid var(--line)}
+.admin-month>summary::-webkit-details-marker{display:none}
+.admin-month>summary::before{content:'▸';color:var(--muted);font-size:11px;width:10px}
+.admin-month[open]>summary::before{content:'▾'}
+.admin-month>summary strong{font-size:14px;color:var(--green)}
+.admin-month>summary small{color:var(--muted);font-size:11px}
+.admin-month>.admin-days{padding-top:8px}
 .admin-more{display:block;margin:12px auto 0;padding:9px 18px;border-radius:10px;cursor:pointer}
 @media(max-width:1100px){
   .settings-admin-layout{grid-template-columns:minmax(0,1fr)}

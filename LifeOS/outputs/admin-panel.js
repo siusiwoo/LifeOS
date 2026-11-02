@@ -37,7 +37,7 @@
   }
 
   async function loadDays(userId) {
-    panel.selectedId = userId; panel.days = null; panel.daysError = ''; panel.daysLoading = true; panel.daysShown = DAYS_PAGE; paint();
+    panel.selectedId = userId; panel.openMonths = null; panel.days = null; panel.daysError = ''; panel.daysLoading = true; panel.daysShown = DAYS_PAGE; paint();
     try { const result = await api(`?userId=${encodeURIComponent(userId)}`); if (panel.selectedId === userId) panel.days = result.days || []; }
     catch (error) { if (panel.selectedId === userId) panel.daysError = error.message; }
     finally { if (panel.selectedId === userId) { panel.daysLoading = false; paint(); } }
@@ -89,8 +89,16 @@
       return ['work', 'notes', 'expenses', 'income', 'growth'].some(key => Array.isArray(d[key]) && d[key].length) || d.reflection;
     });
     if (!days.length) return head + '<p class="admin-empty">아직 남긴 기록이 없어요.</p>';
-    const more = days.length > panel.daysShown ? `<button type="button" class="outline admin-more" data-admin-more>더 보기 (${days.length - panel.daysShown}일 남음)</button>` : '';
-    return head + `<div class="admin-days">${days.slice(0, panel.daysShown).map(dayBlock).join('')}</div>${more}`;
+    // 월별로 묶기: 2026년 11월, 2026년 10월 … (최신 달이 위, 처음엔 최신 달만 펼침)
+    const months = [];
+    days.forEach(row => {
+      const key = String(row.record_date || '').slice(0, 7);
+      const last = months[months.length - 1];
+      if (last && last.key === key) last.rows.push(row); else months.push({ key, rows: [row] });
+    });
+    if (!panel.openMonths) panel.openMonths = new Set(months.length ? [months[0].key] : []);
+    const monthLabel = key => /^\d{4}-\d{2}$/.test(key) ? `${key.slice(0, 4)}년 ${Number(key.slice(5, 7))}월` : '날짜 없음';
+    return head + `<div class="admin-months">${months.map(month => `<details class="admin-month" data-admin-month="${esc(month.key)}" ${panel.openMonths.has(month.key) ? 'open' : ''}><summary><strong>${monthLabel(month.key)}</strong><small>${month.rows.length}일 기록</small></summary><div class="admin-days">${month.rows.map(dayBlock).join('')}</div></details>`).join('')}</div>`;
   }
 
   function panelMarkup() {
@@ -176,6 +184,13 @@
     if (event.target.closest('[data-admin-more]')) { panel.daysShown += DAYS_PAGE; paint(); return; }
     if (event.target.closest('[data-admin-refresh]')) { if (panel.selectedId) loadDays(panel.selectedId); loadUsers(); }
   });
+
+  // 펼친 달 기억 (새로고침해도 유지)
+  document.addEventListener('toggle', event => {
+    const month = event.target.closest?.('[data-admin-month]');
+    if (!month || !panel.openMonths) return;
+    if (month.open) panel.openMonths.add(month.dataset.adminMonth); else panel.openMonths.delete(month.dataset.adminMonth);
+  }, true);
 
   document.addEventListener('input', event => {
     if (!event.target.matches('[data-admin-search]')) return;
