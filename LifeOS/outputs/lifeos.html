@@ -790,7 +790,22 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
   .tree-guide-grid figure.is-current{background:#fff;border-color:var(--green);box-shadow:0 6px 18px #294e4014}
   .tree-guide-badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;padding:3px 7px;border-radius:999px;background:var(--green);color:#fff}
   .tree-guide-note{margin-top:14px;font-size:12px;color:var(--muted);line-height:1.7}
-  @media(max-width:800px){.tree-guide-card{margin-top:15px}.tree-guide-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.tree-guide-grid .growth-tree{height:90px}}
+  .forest-tree{cursor:pointer;transition:.15s}
+  .forest-tree:hover,.forest-tree:focus-visible{background:#eef1ea;outline:none;box-shadow:0 0 0 2px var(--green) inset}
+  .forest-tree figcaption small{display:block;margin-top:2px;font-size:11px;color:var(--green);font-weight:600}
+  .forest-history-card{margin-top:21px}
+  .forest-history>summary{display:flex;justify-content:space-between;align-items:center;gap:10px;cursor:pointer;list-style:none}
+  .forest-history>summary::-webkit-details-marker{display:none}
+  .forest-history>summary h2::before{content:'▸ ';color:var(--muted);font-size:14px}
+  .forest-history[open]>summary h2::before{content:'▾ '}
+  .forest-history>p{margin:12px 0 6px}
+  .forest-log{border:1px solid var(--line);border-radius:12px;margin-top:8px;background:var(--paper);scroll-margin-top:20px}
+  .forest-log>summary{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:12px 14px;cursor:pointer;list-style:none}
+  .forest-log>summary::-webkit-details-marker{display:none}
+  .forest-log>summary small{color:var(--muted);font-size:12px}
+  .forest-log[open]>summary{border-bottom:1px solid var(--line)}
+  .forest-log .tree-history{padding:0 14px 6px;margin:0;max-height:420px;overflow:auto}
+  @media(max-width:800px){.tree-guide-card,.forest-history-card{margin-top:15px}.tree-guide-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.tree-guide-grid .growth-tree{height:90px}}
   @media(max-width:390px){.tree-guide-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 <script>
@@ -807,9 +822,67 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
     }).join('');
     return `<section class="card tree-guide-card"><div class="card-head"><h2>나무가 자라는 모습</h2><span class="pill">단계별 예시</span></div><p class="muted">포인트가 쌓이면 나무가 이렇게 자라요.</p><div class="tree-guide-grid">${items}</div><p class="tree-guide-note">100점을 채우면 나무가 완성되어 ‘나무 갯수 보기’ 숲에 심어지고, 다시 씨앗부터 새 나무를 키워요.</p></section>`;
   }
+  // 숲: 나무마다 완성 날짜 + 어떤 기록으로 포인트가 쌓였는지
+  const kindLabels = {work:'해야 할 일을 완료했어요',expenses:'소비를 기록했어요',growth:'배움을 기록했어요',weekly:'이번 주 목표를 완료했어요','long-goal':'장기 목표를 달성했어요'};
+  const dot = date => String(date || '').replaceAll('-', '.');
+  function forestTrees() {
+    const events = Object.values(Repository.data.motivation?.treeEvents || {}).map((event, index) => ({ ...event, order: index }))
+      .sort((a, b) => String(a.date || '').localeCompare(String(b.date || '')) || a.order - b.order);
+    const trees = [];
+    let current = { events: [], points: 0 }, total = 0;
+    for (const event of events) {
+      const points = Number(event.points) || 1;
+      current.events.push(event); current.points += points; total += points;
+      while (total >= (trees.length + 1) * 100) {
+        trees.push({ ...current, completedAt: event.date });
+        current = { events: [], points: 0 };
+      }
+    }
+    return { trees, growing: current };
+  }
+  function forestHistory() {
+    const { trees, growing } = forestTrees();
+    if (!trees.length) return '';
+    const list = items => `<ul class="tree-history">${items.slice().reverse().map(e => `<li><div><strong>${kindLabels[e.kind] || '실천을 기록했어요'}</strong><p>${esc(e.title || '')}</p></div><time>${esc(e.date || '')}</time><span class="pill">+${Number(e.points) || 1}</span></li>`).join('')}</ul>`;
+    const groups = trees.map((tree, index) => {
+      const first = tree.events[0]?.date;
+      return `<details class="forest-log" data-forest-log="${index + 1}"><summary><strong>${index + 1}번째 나무</strong><small>${dot(first)} ~ ${dot(tree.completedAt)} 완성 · 기록 ${tree.events.length}개</small></summary>${list(tree.events)}</details>`;
+    }).reverse().join('');
+    const now = growing.events.length ? `<details class="forest-log"><summary><strong>${trees.length + 1}번째 나무 (키우는 중)</strong><small>기록 ${growing.events.length}개</small></summary>${list(growing.events)}</details>` : '';
+    return `<section class="card forest-history-card"><details class="forest-history" ${forestOpen ? 'open' : ''}><summary><h2>지금까지 한 것 보기</h2><span class="pill">나무별 포인트 기록</span></summary><p class="muted">나무를 누르거나 아래 목록을 펼치면, 어떤 기록으로 포인트가 올라갔는지 볼 수 있어요.</p>${now}${groups}</details></section>`;
+  }
+  let forestOpen = false;
+  function decorateForest(html) {
+    const { trees } = forestTrees();
+    return html.replace(/<figure>([\s\S]*?)<figcaption>(\d+)번째 나무<\/figcaption><\/figure>/g, (all, svg, number) => {
+      const tree = trees[Number(number) - 1];
+      return `<figure class="forest-tree" data-forest-tree="${number}" role="button" tabindex="0" aria-label="${number}번째 나무 기록 보기">${svg}<figcaption>${number}번째 나무${tree ? `<small>${dot(tree.completedAt)} 완성</small>` : ''}</figcaption></figure>`;
+    });
+  }
+  function openForestLog(number) {
+    forestOpen = true;
+    const outer = document.querySelector('.forest-history');
+    if (outer) outer.open = true;
+    const log = document.querySelector(`[data-forest-log="${number}"]`);
+    if (log) { log.open = true; log.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  }
+  document.addEventListener('click', event => {
+    const tree = event.target.closest('[data-forest-tree]');
+    if (tree) openForestLog(tree.dataset.forestTree);
+  });
+  document.addEventListener('keydown', event => {
+    const tree = event.target.closest?.('[data-forest-tree]');
+    if (tree && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); openForestLog(tree.dataset.forestTree); }
+  });
+  document.addEventListener('toggle', event => {
+    if (event.target.classList?.contains('forest-history')) forestOpen = event.target.open;
+  }, true);
+
   treeView = function () {
     const html = baseTreeView.apply(this, arguments);
-    return treeTab === 'current' ? html + treeGuide() : html;
+    if (treeTab === 'current') return html + treeGuide();
+    if (treeTab === 'forest') return decorateForest(html) + forestHistory();
+    return html;
   };
 })();
 </script>
