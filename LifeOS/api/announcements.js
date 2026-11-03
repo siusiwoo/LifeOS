@@ -1,7 +1,7 @@
 'use strict';
 
 // 새 소식(업데이트 공지)
-// GET: 누구나 최신 글 목록 조회 / POST·DELETE: 관리자만 (로그인 토큰의 이메일 확인)
+// GET: 누구나 최신 글 목록 조회 / POST(추가)·PATCH(수정)·DELETE(삭제): 관리자만 (로그인 토큰의 이메일 확인)
 
 const { createClient } = require('@supabase/supabase-js');
 
@@ -38,8 +38,8 @@ module.exports = async function handler(request, response) {
       return response.status(200).json({ posts: data || [] });
     }
 
-    if (request.method !== 'POST' && request.method !== 'DELETE') {
-      response.setHeader('Allow', 'GET, POST, DELETE');
+    if (!['POST', 'PATCH', 'DELETE'].includes(request.method)) {
+      response.setHeader('Allow', 'GET, POST, PATCH, DELETE');
       return response.status(405).json({ error: '허용되지 않는 요청입니다.' });
     }
     if (!serviceKey) return response.status(503).json({ error: '서버 설정이 아직 완료되지 않았습니다.' });
@@ -53,6 +53,18 @@ module.exports = async function handler(request, response) {
       if (!title) return response.status(400).json({ error: '제목을 입력해 주세요.' });
       const { data, error } = await admin.from('announcements').insert({ title, body }).select('id,title,body,created_at').single();
       if (error) throw error;
+      return response.status(200).json({ post: data });
+    }
+
+    if (request.method === 'PATCH') {
+      const id = String(request.body?.id || '');
+      const title = String(request.body?.title || '').trim().slice(0, 80);
+      const body = String(request.body?.body || '').trim().slice(0, 2000);
+      if (!/^[0-9a-f-]{36}$/i.test(id)) return response.status(400).json({ error: '수정할 글을 찾을 수 없습니다.' });
+      if (!title) return response.status(400).json({ error: '제목을 입력해 주세요.' });
+      const { data, error } = await admin.from('announcements').update({ title, body }).eq('id', id).select('id,title,body,created_at').maybeSingle();
+      if (error) throw error;
+      if (!data) return response.status(404).json({ error: '수정할 글을 찾을 수 없습니다.' });
       return response.status(200).json({ post: data });
     }
 
