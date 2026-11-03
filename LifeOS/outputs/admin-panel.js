@@ -4,7 +4,11 @@
 (() => {
   const ADMIN_EMAILS = ['shshw3388@gmail.com'];
   const DAYS_PAGE = 20;
-  const panel = { open: false, users: null, loading: false, error: '', query: '', selectedId: '', days: null, daysLoading: false, daysError: '', daysShown: DAYS_PAGE };
+  // 패널을 열어 둔 상태를 이 브라우저에 기억 (새로고침·다시 접속해도 유지)
+  const OPEN_KEY = 'lifeos-admin-panel-open';
+  const readOpen = () => { try { return localStorage.getItem(OPEN_KEY) === '1'; } catch { return false; } };
+  const saveOpen = value => { try { value ? localStorage.setItem(OPEN_KEY, '1') : localStorage.removeItem(OPEN_KEY); } catch {} };
+  const panel = { open: readOpen(), users: null, loading: false, error: '', query: '', selectedId: '', days: null, daysLoading: false, daysError: '', daysShown: DAYS_PAGE };
 
   const esc = value => String(value ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
   const won = value => `${Number(value || 0).toLocaleString('ko-KR')}원`;
@@ -159,7 +163,7 @@
   }
 
   window.addEventListener('lifeos-auth', () => {
-    if (!isAdmin()) { panel.open = false; panel.users = null; panel.selectedId = ''; panel.days = null; panel.error = ''; }
+    if (!isAdmin()) { panel.users = null; panel.selectedId = ''; panel.days = null; panel.error = ''; }
     try { if (state.view === 'settings') render(); } catch {}
   });
 
@@ -171,6 +175,7 @@
     select.value = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'gray';
     if (!isAdmin()) return;
     panel.open = !panel.open;
+    saveOpen(panel.open);
     addThemeOption();
     if (panel.open) { mount(); if (window.innerWidth <= 1100) document.querySelector('#admin-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     else unmount();

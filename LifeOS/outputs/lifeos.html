@@ -778,7 +778,42 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
   .recurrence-day input:checked+span{background:var(--green);border-color:var(--green);color:#fff}
   .recurrence-day input:focus-visible+span{outline:2px solid var(--green);outline-offset:2px}
 </style>
-<script src="./admin-panel.js?v=20261102-months"></script>
+<style>
+  .tree-guide-card{margin-top:21px}
+  .tree-guide-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:18px}
+  .tree-guide-grid figure{position:relative;margin:0;background:#f6f7f4;border:1px solid transparent;border-radius:14px;padding:12px 8px 14px;text-align:center;display:grid;gap:4px;justify-items:center}
+  .tree-guide-grid .growth-tree{height:110px}
+  .tree-guide-grid figcaption{display:grid;gap:2px}
+  .tree-guide-grid figcaption strong{font-size:13px}
+  .tree-guide-grid figcaption small{font-size:11px;color:var(--muted)}
+  .tree-guide-grid figure.is-past{opacity:.55}
+  .tree-guide-grid figure.is-current{background:#fff;border-color:var(--green);box-shadow:0 6px 18px #294e4014}
+  .tree-guide-badge{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;padding:3px 7px;border-radius:999px;background:var(--green);color:#fff}
+  .tree-guide-note{margin-top:14px;font-size:12px;color:var(--muted);line-height:1.7}
+  @media(max-width:800px){.tree-guide-card{margin-top:15px}.tree-guide-grid{grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.tree-guide-grid .growth-tree{height:90px}}
+  @media(max-width:390px){.tree-guide-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+</style>
+<script>
+// Tree 화면: 나무가 자라는 단계별 모양 예시 (현재 단계 표시)
+(() => {
+  if (typeof treeView !== 'function' || typeof growthTree !== 'function') return;
+  const baseTreeView = treeView;
+  function treeGuide() {
+    const m = treeSummary(Repository.data.motivation);
+    const items = m.stages.map((stage, index) => {
+      const state = index < m.stage ? 'is-past' : index === m.stage ? 'is-current' : '';
+      const range = index === 0 ? '0점부터' : `${stage.at}점부터`;
+      return `<figure class="${state}">${index === m.stage ? '<span class="tree-guide-badge">지금</span>' : ''}${growthTree(index)}<figcaption><strong>${index + 1}. ${esc(stage.name)}</strong><small>${range}</small></figcaption></figure>`;
+    }).join('');
+    return `<section class="card tree-guide-card"><div class="card-head"><h2>나무가 자라는 모습</h2><span class="pill">단계별 예시</span></div><p class="muted">포인트가 쌓이면 나무가 이렇게 자라요.</p><div class="tree-guide-grid">${items}</div><p class="tree-guide-note">100점을 채우면 나무가 완성되어 ‘나무 갯수 보기’ 숲에 심어지고, 다시 씨앗부터 새 나무를 키워요.</p></section>`;
+  }
+  treeView = function () {
+    const html = baseTreeView.apply(this, arguments);
+    return treeTab === 'current' ? html + treeGuide() : html;
+  };
+})();
+</script>
+<script src="./admin-panel.js?v=20261103-keep-open"></script>
 </body>
 </html>
 
