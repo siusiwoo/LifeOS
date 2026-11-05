@@ -24,6 +24,7 @@ function fixedMoneyRules(){
   return Array.isArray(rules)?rules:[];
 }
 function fixedMoneyToday(){return dateKey(new Date())}
+function fixedMoneySkipped(rule,date){return Array.isArray(rule.skipDates)&&rule.skipDates.includes(date)}
 function fixedMoneyDayNumber(date){
   return Date.UTC(Number(date.slice(0,4)),Number(date.slice(5,7))-1,Number(date.slice(8,10)))/86400000;
 }
@@ -35,6 +36,7 @@ function fixedMoneyBounds(rule,from,to){
 function fixedMoneyOccurs(rule,date){
   if(!['income','expense'].includes(rule.kind)||!fixedMoneyFrequencyLabel[rule.frequency]||!validDate(rule.startDate)||!validDate(date))return false;
   if(!fixedMoneyBounds(rule,date,date))return false;
+  if(fixedMoneySkipped(rule,date))return false;
   if(rule.frequency==='daily')return true;
   if(rule.frequency==='weekly')return (fixedMoneyDayNumber(date)-fixedMoneyDayNumber(rule.startDate))%7===0;
   const lastDay=new Date(Number(date.slice(0,4)),Number(date.slice(5,7)),0).getDate();
@@ -60,7 +62,7 @@ function fixedMoneyDates(rule,from,to){
       cursor.setMonth(month+1);
     }
   }
-  return dates;
+  return dates.filter(date=>!fixedMoneySkipped(rule,date));
 }
 function fixedMoneyConfirmed(){
   const confirmed=new Map();
@@ -115,7 +117,7 @@ moneyList=function(day,kind,title){
   const content=rows.map(record=>{
     const automatic=record.fixedVirtual===true;
     const meta=automatic?`고정 · ${fixedMoneyFrequencyLabel[record.fixedFrequency]}`:kind==='expense'?(record.category||'기타 소비'):'선택 날짜에 발생한 수입';
-    const action=automatic?`<button class="edit" data-fixed-manage="${esc(record.fixedRuleId)}" aria-label="${esc(record.title)} 고정 설정 보기">고정 설정</button>`:
+    const action=automatic?`<button class="edit" data-fixed-manage="${esc(record.fixedRuleId)}" aria-label="${esc(record.title)} 고정 설정 보기">고정 설정</button><button class="delete-inline" data-fixed-skip="${esc(record.fixedRuleId)}" data-fixed-date="${esc(record.fixedDueDate)}" aria-label="${esc(record.title)} 이 날짜만 삭제">×</button>`:
       `<button class="edit" data-edit="${esc(record.id)}" data-kind="${kind}" aria-label="${esc(record.title)} 수정">수정</button><button class="delete-inline" data-remove="${esc(record.id)}" data-kind="${kind}" aria-label="${esc(record.title)} 삭제">×</button>`;
     return `<div class="task"><div class="task-body"><div class="task-title">${esc(record.title)}</div><div class="task-meta">${meta}</div></div><span class="list-amount">${won(record.amount)}원</span>${action}</div>`;
   }).join('')||empty(kind,'아직 기록이 없어요.');
@@ -162,6 +164,8 @@ document.addEventListener('click',event=>{
   if(manage){document.querySelector('.fixed-money-card')?.scrollIntoView({behavior:'smooth',block:'center'});return}
   const stop=event.target.closest('[data-fixed-stop]');
   if(stop){const rule=fixedMoneyRules().find(item=>item.id===stop.dataset.fixedStop);if(!rule)return;rule.endDate=fixedMoneyToday();saveFixedMoneyRules();toast('오늘 이후의 예정 내역을 중단했어요.');return}
+  const skip=event.target.closest('[data-fixed-skip]');
+  if(skip){const rule=fixedMoneyRules().find(item=>item.id===skip.dataset.fixedSkip),date=skip.dataset.fixedDate;if(!rule||!validDate(date))return;if(!window.confirm(`${date} 하루치 '${rule.title}' 내역만 삭제할까요? 고정 설정과 다른 날짜는 그대로 유지됩니다.`))return;rule.skipDates=[...new Set([...(rule.skipDates||[]),date])];saveFixedMoneyRules();toast('이 날짜의 고정 내역을 삭제했어요.');return}
   const remove=event.target.closest('[data-fixed-delete]');
   if(remove){const rules=fixedMoneyRules(),index=rules.findIndex(item=>item.id===remove.dataset.fixedDelete);if(index<0)return;if(!window.confirm('이 고정 거래 설정을 삭제할까요? 자동 계산된 과거 내역도 사라집니다. 직접 확인해 저장한 기록은 남습니다.'))return;rules.splice(index,1);saveFixedMoneyRules();toast('고정 거래 설정을 삭제했어요.');return}
   if(event.target.closest('[data-fixed-close]'))fixedMoneyDialog.close();
