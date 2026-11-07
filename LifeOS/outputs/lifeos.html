@@ -1231,6 +1231,106 @@ document.addEventListener('click',event=>{if(event.target.closest('[data-ranking
 /* 모바일: 메모 제목은 2줄까지만, 넘치면 … */
 @media(max-width:600px){.memo-row .memo-title{overflow:hidden;-webkit-line-clamp:2;line-clamp:2}}
 </style>
+<style>
+  .reflection-time{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
+  .reflection-time b{font-weight:700;color:var(--ink)}
+  .reflection-time small{opacity:.75}
+  .reflection-history-list li{cursor:pointer;align-items:flex-start}
+  .reflection-history-list li:hover{background:rgba(0,0,0,.03)}
+  .reflection-history-list li strong{white-space:pre-wrap;word-break:break-word;font-weight:500;line-height:1.5}
+  .reflection-history-dialog [data-reflection-scope].active{font-weight:800;text-decoration:underline}
+  .reflection-history-list li span{font-size:12px;color:var(--muted);white-space:nowrap;text-align:right}
+  .reflection-head-actions{display:flex;gap:10px;align-items:center;margin-left:auto}
+</style>
+<script>
+(() => {
+  // 오늘의 한 줄: 작성/수정 시각 기록 + 카드 하단에 표시
+  const baseUpsert = Repository.upsert.bind(Repository);
+  const baseRemove = Repository.remove.bind(Repository);
+  Repository.upsert = function (date, kind, record) {
+    if (kind === 'reflection') {
+      const day = this.data.days[date] ??= blankDay();
+      const text = (record?.title || '').trim();
+      if (text && text !== (day.reflection || '').trim()) {
+        const now = new Date().toISOString();
+        if (!day.reflection || !day.reflectionCreatedAt) day.reflectionCreatedAt = now;
+        day.reflectionUpdatedAt = now;
+      }
+    }
+    return baseUpsert(date, kind, record);
+  };
+  Repository.remove = function (date, kind, id) {
+    if (kind === 'reflection' && this.data.days[date]) {
+      delete this.data.days[date].reflectionCreatedAt;
+      delete this.data.days[date].reflectionUpdatedAt;
+    }
+    return baseRemove(date, kind, id);
+  };
+
+  const fmt = (iso, recordDate) => {
+    const d = new Date(iso);
+    if (isNaN(d)) return '';
+    const time = d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' });
+    const same = dateKey(d) === recordDate;
+    return same ? time : `${d.getMonth() + 1}월 ${d.getDate()}일 ${time}`;
+  };
+  const baseCard = reflectionCard;
+  reflectionCard = function (day) {
+    const html = baseCard(day);
+    if (!day.reflection) return html;
+    const created = day.reflectionCreatedAt, updated = day.reflectionUpdatedAt;
+    let info;
+    if (created) {
+      info = `🕒 <b>${fmt(created, state.date)}</b> 작성`;
+      if (updated && updated !== created) info += ` <small>· ${fmt(updated, state.date)} 수정</small>`;
+    } else {
+      info = '🕒 <small>작성 시각 기록 없음</small>';
+    }
+    const oldSpan = `<span>${state.date.replaceAll('-', '.')} · 나의 회고</span>`;
+    return html.replace(oldSpan, `<span class="reflection-time">${state.date.replaceAll('-', '.')} · ${info}</span>`);
+  };
+
+  // 전체 보기: 지금까지 쓴 한 줄을 최신 날짜순으로 (소비 전체 보기와 같은 모양)
+  const timeOnly = iso => { const d = new Date(iso); return isNaN(d) ? '' : `${d.getMonth() + 1}.${d.getDate()} ${d.toLocaleTimeString('ko-KR', { hour: 'numeric', minute: '2-digit' })}`; };
+  const cardWithBtn = reflectionCard;
+  reflectionCard = function (day) {
+    return cardWithBtn(day).replace('<button class="text-btn" data-add="reflection">', '<button type="button" class="text-btn" data-reflection-history aria-label="오늘의 한 줄 전체 보기">전체 보기 ↗</button><button class="text-btn" data-add="reflection">');
+  };
+  const dlg = document.createElement('dialog');
+  dlg.className = 'money-history-dialog reflection-history-dialog';
+  dlg.setAttribute('aria-labelledby', 'reflection-history-title');
+  document.body.append(dlg);
+  const fill = () => {
+    const scope = dlg.dataset.scope || 'all', month = state.date.slice(0, 7);
+    const rows = Object.entries(Repository.data.days || {})
+      .filter(([date, d]) => d && String(d.reflection || '').trim() && (scope === 'all' || date.slice(0, 7) === month))
+      .sort((a, b) => b[0].localeCompare(a[0]));
+    dlg.querySelector('.money-history-summary').innerHTML = `<span>${rows.length}개의 한 줄</span><strong>${scope === 'all' ? '전체' : month.replace('-', '.')}</strong>`;
+    dlg.querySelector('.money-history-list').innerHTML = rows.length ? rows.map(([date, d]) => {
+      const c = d.reflectionCreatedAt, u = d.reflectionUpdatedAt;
+      const when = c ? `🕒 ${timeOnly(c)} 작성${u && u !== c ? `<br>${timeOnly(u)} 수정` : ''}` : '작성 시각 없음';
+      return `<section class="money-history-day"><h3><time datetime="${esc(date)}">${esc(parseDate(date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' }))}</time></h3><ul class="reflection-history-list"><li data-reflection-go="${esc(date)}"><div><strong>${esc(d.reflection)}</strong></div><span>${when}</span></li></ul></section>`;
+    }).join('') : '<p class="money-history-empty">아직 남긴 한 줄이 없어요.</p>';
+    dlg.querySelectorAll('[data-reflection-scope]').forEach(b => b.classList.toggle('active', b.dataset.reflectionScope === scope));
+  };
+  const open = () => {
+    dlg.dataset.scope = dlg.dataset.scope || 'all';
+    dlg.innerHTML = `<div class="modal-head"><h2 id="reflection-history-title">오늘의 한 줄 전체 보기</h2><button type="button" class="icon-btn" data-reflection-close aria-label="닫기">✕</button></div><p class="money-history-period"><button type="button" class="text-btn" data-reflection-scope="all">전체</button> · <button type="button" class="text-btn" data-reflection-scope="month">이번 달</button> · 최신 날짜순 · 누르면 그 날로 이동</p><div class="money-history-summary"></div><div class="money-history-list" tabindex="0" role="region" aria-label="오늘의 한 줄 목록"></div><div class="modal-actions"><button type="button" class="outline" data-reflection-close>닫기</button></div>`;
+    fill();
+    dlg.showModal();
+  };
+  document.addEventListener('click', e => { if (e.target.closest('[data-reflection-history]')) open(); });
+  dlg.addEventListener('click', e => {
+    if (e.target.closest('[data-reflection-close]')) return dlg.close();
+    const sc = e.target.closest('[data-reflection-scope]');
+    if (sc) { dlg.dataset.scope = sc.dataset.reflectionScope; return fill(); }
+    const go = e.target.closest('[data-reflection-go]');
+    if (go) { dlg.close(); setDate(go.dataset.reflectionGo); }
+  });
+  window.addEventListener('lifeos-auth', () => { if (dlg.open) dlg.close(); });
+  render();
+})();
+</script>
 <script src="./admin-panel.js?v=20261103-keep-open"></script>
 </body>
 </html>
